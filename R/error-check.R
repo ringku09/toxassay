@@ -14,12 +14,7 @@
 #' @examples
 #' # Assume valid inputs are "A", "B", and "C"
 #' valid_inputs <- c("A", "B", "C")
-#'
-#' # Example 1: Correct input
 #' test_input(input = "A", inputs = valid_inputs)
-#' # Example 3: Handle missing input
-#' input_val = NULL
-#' test_input(input = input_val, inputs = valid_inputs)
 #'
 #' @export
 test_input <- function(input, inputs, auto_input = FALSE, error_call = caller_env()) {

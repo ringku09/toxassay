@@ -230,6 +230,6 @@ tgx_degs <- function(...,
     cli::cli_ul(c(
       cli::bg_magenta("Total number of unique genes = {unique_genes} ({n_probe} probes)"),
       cli::bg_red("Number of significant genes = {loo_n} (at {'\u03B1'}  = {p_cutoff})")
-    ), call = error_call)
+    ))
     return(structure(sig_tab, class = c("ToxAssay", "tbl_df", "tbl", "data.frame")))
 }
