@@ -77,7 +77,7 @@ get_netdata <- function(gene_df,
       from = gene_map$gene_symbol[match(net_df$edges$from, gene_map$STRING_id)],
       to = gene_map$gene_symbol[match(net_df$edges$to, gene_map$STRING_id)]
       ) %>%
-    distinct()
+    dplyr::distinct()
   net_df$vertices <- gene_map  #[match(gene_map$STRING_id, net_df$vertices$name),]
   network <- igraph::graph_from_data_frame(d = net_df$edges, vertices = net_df$vertices, directed = TRUE)
   deg <- igraph::degree(network)            # Degree centrality
@@ -152,19 +152,19 @@ get_hubdata <- function(net_data, condition = "degree >= 10", error_call = calle
   cond <- gsub("[a-zA-Z0-9.]", "", condition)
 
   if (!any(sapply(list("degree", "betweenness", "closenes", "eigenes"), FUN = identical, attrb))) {
-    cli_abort(c("Metric used in condition must be a valid metric.",
+    cli::cli_abort(c("Metric used in condition must be a valid metric.",
                 "x" = "Input {style_bold(col_red(backtick(attrb)))} is not a valid metric.",
                 "i" = "Please use either `degree`, `betweenness`, `closenes`, or `eigenes` instread.")
               , call = error_call)
   }
   if (!any(sapply(list(">", "<", ">=", "<=", "=="), FUN = identical, cond))) {
-    cli_abort(c("Comparison operator used in condition must be a valid comparison operator.",
+    cli::cli_abort(c("Comparison operator used in condition must be a valid comparison operator.",
                 "x" = "Input {style_bold(col_red(backtick(cond)))} is not a valid metric.",
                 "i" = "Please use either `<`, `>`, `<=`, `>=`, or `==` instread.")
               , call = error_call)
   }
   if (!is.numeric(value) | is.na(value)) {
-    cli_abort(c("The condition must contain numeric value after symbol.",
+    cli::cli_abort(c("The condition must contain numeric value after symbol.",
                 "x" = "The numeric value in condition are missing.",
                 "i" = "Please provide appropriate numeric value in the condition.")
               , call = error_call)
@@ -174,7 +174,7 @@ get_hubdata <- function(net_data, condition = "degree >= 10", error_call = calle
     unlist()
   if (all(value > valid_cond)) {
     max_val <- max(valid_cond)
-    cli_abort(c("The numeric value must be valid with condition.",
+    cli::cli_abort(c("The numeric value must be valid with condition.",
                 "x" = "The numeric value {value} in condition exceed the real values.",
                 "i" = "Please provide value smaller than {max_val} in the condition.")
               , call = error_call)
