@@ -1,14 +1,5 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-<style type="text/css">
-.link-style1 a {
-  color: blue;
-  text-decoration: underline;
-}
-&#10;.link-style2 a {
- color: blue;
-}
-&#10;</style>
 
 # toxassay <a href="https://dplyr.tidyverse.org"><img src="man/figures/logo.png" align="right" height="138" /></a>
 
@@ -56,4 +47,4 @@ pak::pak("ringku09/toxassay")
 If you encounter a clear bug, please file an issue with a minimal
 reproducible example on
 [GitHub](https://github.com/ringku09/toxassay/issues). For questions and
-other discussion, please E-mail: .link-style1\[<ringku_740@yahoo.com>\].
+other discussion, please E-mail: \[<ringku_740@yahoo.com>\].
