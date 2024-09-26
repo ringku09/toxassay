@@ -46,6 +46,41 @@ can install the development version of toxassay from GitHub.
 pak::pak("ringku09/toxassay")
 ```
 
+## Usages
+
+### Download and preprocessing analysis ready data
+
+In the current version of **ToxAssay**, users can download and process
+raw compound perturbation data from the [Open
+TG-GATEs](https://dbarchive.biosciencedbc.jp/en/open-tggates/download.html)
+and [DrugMatrix](https://ntp.niehs.nih.gov/data/drugmatrix) databases,
+as well as curated relational data from the [CTD](https://ctdbase.org).
+
+Available compounds in databases.
+
+``` r
+# Compounds in Open TG-GATEs database
+# Data available for compounds in Rat in-vivo liver Single data
+tggates_compounds(species = "Rat", data_type = "in_vivo", tissue = "Liver", dose_type = "Single")
+
+# Compounds in Open DrugMatrix database
+# Data available for compounds in `Liver`
+drugmatrix_compounds(tissue = "Liver")
+```
+
+``` r
+# Get data from Open TG-GATEs
+get_tggates(compounds = c("2-nitrofluorene", "N-nitrosomorpholine"), species = "Rat", data_type = "in_vivo", tissue = "Liver", dose_type = "Single")
+
+# Get data from Open DrugMatrix
+get_drugmatrix(compounds = c("Ethanol", "Estriol"), tissue = "Liver")
+
+# Get data from CTD
+get_ctd(compounds = c("Ethanol", "Estriol"), gene_parm = "cgixns", disease_parm = "diseases")
+```
+
+<img src="man/figures/downloading.png" width="890"/>
+
 ## Getting help
 
 If you encounter a clear bug, please file an issue with a minimal
