@@ -43,11 +43,13 @@ compound_str <- function(compound, metadata) {
       "i" = "Please choose appropiate compound or provide {.arg metadata} correctly."
     ))
   }
-  attr_data2 <- metadata %>% filter(.data$compound_name == compound)
+  attr_data2 <- metadata %>% dplyr::filter(.data$compound_name == compound)
   dose_df <- attr_data2 %>%
-    group_by(.data$dose_level) %>%
-    nest()
-  time_df <-lapply(dose_df$data, function(x) x %>% group_by(.data$time_level) %>% nest())
+    dplyr::group_by(.data$dose_level) %>%
+    tidyr::nest()
+  time_df <-lapply(dose_df$data, function(x) x %>%
+                     dplyr::group_by(.data$time_level) %>%
+                     tidyr::nest())
   dose_lev <- nrow(dose_df)
   time_lev <- sapply(time_df, nrow)
   rep_lev <- unlist(lapply(time_df, function(x) sapply(x$data, nrow)))
