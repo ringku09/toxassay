@@ -14,10 +14,10 @@ coverage](https://codecov.io/gh/tidyverse/dplyr/branch/main/graph/badge.svg)](ht
 
 ## Overview
 
-ToxAssay is an R-based software package designed for the comprehensive
-evaluation of drug-induced toxicity utilizing complex toxicogenomics
-databases. The package offers a comprehensive suite of functions,
-encompassing:
+**ToxAssay** is an R-based software package designed for the
+comprehensive evaluation of drug-induced toxicity utilizing complex
+toxicogenomics databases. The package offers a comprehensive suite of
+functions, encompassing:
 
 - Automated acquisition, preprocessing, and annotation of data by
   compound name for efficient management.
@@ -53,13 +53,13 @@ pak::pak("FanLiuLab/toxassay")
 In the current version of **ToxAssay**, users can download and process
 raw compound perturbation data from the [Open
 TG-GATEs](https://dbarchive.biosciencedbc.jp/en/open-tggates/download.html)
-and [DrugMatrix](https://ntp.niehs.nih.gov/data/drugmatrix) databases,
+and [DrugMatrix](https://ntp.niehs.nih.gov/data/drugmatrix) database s,
 as well as curated relational data from the [CTD](https://ctdbase.org).
 
-Available compounds in databases:
+Available compounds in databases for different parameters:
 
 ``` r
-# Compounds in Open TG-GATEs database
+# Compounds in Open TG-GATEs data base
 # Data available for compounds in Rat in-vivo liver Single data
 tggates_compounds(species = "Rat", data_type = "in_vivo", tissue = "Liver", dose_type = "Single")
 

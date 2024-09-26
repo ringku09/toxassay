@@ -24,7 +24,7 @@ options(tibble.print_min = 5, tibble.print_max = 5)
 
 ## Overview
 
-ToxAssay is an R-based software package designed for the comprehensive evaluation of drug-induced toxicity utilizing complex toxicogenomics databases. The package offers a comprehensive suite of functions, encompassing: 
+**ToxAssay** is an R-based software package designed for the comprehensive evaluation of drug-induced toxicity utilizing complex toxicogenomics databases. The package offers a comprehensive suite of functions, encompassing: 
 
 * Automated acquisition, preprocessing, and annotation of data by compound name for efficient management.
 * Identification of molecular markers for targeted toxicity, such as differentially expressed genes (DEGs),adverse outcome pathways (AOPs), functional pathways, and Protein-Protein Interaction (PPI) networks,  etc.
@@ -52,11 +52,11 @@ pak::pak("FanLiuLab/toxassay")
 
 ### Download and preprocess analysis-ready data
 
-In the current version of **ToxAssay**, users can download and process raw compound perturbation data from the [Open TG-GATEs](https://dbarchive.biosciencedbc.jp/en/open-tggates/download.html) and [DrugMatrix](https://ntp.niehs.nih.gov/data/drugmatrix) databases, as well as curated relational data from the [CTD](https://ctdbase.org).
+In the current version of **ToxAssay**, users can download and process raw compound perturbation data from the [Open TG-GATEs](https://dbarchive.biosciencedbc.jp/en/open-tggates/download.html) and [DrugMatrix](https://ntp.niehs.nih.gov/data/drugmatrix) database s, as well as curated relational data from the [CTD](https://ctdbase.org).
 
-Available compounds in databases:
+Available compounds in databases for different parameters:
 ```{r, eval = FALSE}
-# Compounds in Open TG-GATEs database
+# Compounds in Open TG-GATEs data base
 # Data available for compounds in Rat in-vivo liver Single data
 tggates_compounds(species = "Rat", data_type = "in_vivo", tissue = "Liver", dose_type = "Single")
 
