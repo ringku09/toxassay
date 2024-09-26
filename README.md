@@ -17,12 +17,15 @@ coverage](https://codecov.io/gh/tidyverse/dplyr/branch/main/graph/badge.svg)](ht
 ToxAssay is an R-based software package designed for the comprehensive
 evaluation of drug-induced toxicity utilizing complex toxicogenomics
 databases. The package offers a comprehensive suite of functions,
-encompassing: \* (i) automated acquisition, preprocessing, and
-annotation of data by compound name for efficient management. \* (ii)
-identification of molecular markers for targeted toxicity, including
-DEGs, AOPs, functional pathways, and Protein-Protein Interaction (PPI)
-networks. \* (iii) development of optimized machine-learning classifiers
-for predicting the targeted toxicity in test samples of compounds.
+encompassing:
+
+- 1)  automated acquisition, preprocessing, and annotation of data by
+      compound name for efficient management.
+- 2)  identification of molecular markers for targeted toxicity,
+      including DEGs, AOPs, functional pathways, and Protein-Protein
+      Interaction (PPI) networks.
+- 3)  development of optimized machine-learning classifiers for
+      predicting the targeted toxicity in test samples of compounds.
 
 dplyr is a grammar of data manipulation, providing a consistent set of
 verbs that help you solve the most common data manipulation challenges:
