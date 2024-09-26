@@ -20,7 +20,7 @@
 #' sim_str <- data_str(gr, metadata = sim_data$metadata)
 #' summary_mat <- get_matrix(sim_str)
 #' hlm(Y = sim_data$expression, A = summary_mat$A, B =summary_mat$B, a = sim_str[[1]], p = sum(sim_str[[4]]), n = sum(sim_str[[5]]))
-hlm <- function(Y, A, B, a, p, n, error_call = caller_env()) {
+hlm <- function(Y, A, B, a, p, n, error_call = rlang::caller_env()) {
   if (!(inherits(Y, "matrix"))) {
     cli::cli_abort(c("The {.arg Y} must be a matrix.",
              "i" = "Please make {.arg Y} as matrix."), call = error_call)
