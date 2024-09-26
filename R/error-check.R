@@ -28,7 +28,7 @@
 #'
 #' @export
 test_input <- function(input, inputs, auto_input = FALSE, error_call = caller_env()) {
-  if (is_missing(inputs)) {
+  if (rlang::is_missing(inputs)) {
     formal.args <- formals(sys.function(sysP <- sys.parent()))
     inputs <- eval(formal.args[[as.character(substitute(input))]],
                    envir = sys.frame(sysP))
@@ -39,8 +39,8 @@ test_input <- function(input, inputs, auto_input = FALSE, error_call = caller_en
   } else {
     new_inputs <- inputs
   }
-  if (is_missing(input) | is_empty(input)) {
-    cli_abort(c("{backtick(deparse(substitute(input)))} is missing.",
+  if (rlang::is_missing(input) | rlang::is_empty(input)) {
+    cli::cli_abort(c("{backtick(deparse(substitute(input)))} is missing.",
                 "i" = "Please choose either {add_or(style_bold(col_green(backtick(new_inputs))))} instead."),
               wrap = TRUE, call = error_call)
   }
@@ -48,7 +48,7 @@ test_input <- function(input, inputs, auto_input = FALSE, error_call = caller_en
     if (auto_input) {
       eval.parent(substitute(input <- inputs[1]))
     } else {
-      cli_abort(c(
+      cli::cli_abort(c(
         "Multiple {backtick(deparse(substitute(input)))} are not allowed when `auto_input = FALSE`",
         "x" = "You have provided {backtick(deparse(substitute(input)))} of {style_bold(col_red(backtick(input)))}.",
         "i" = "Please choose either {add_or(style_bold(col_green(backtick(input))))} instead."
@@ -56,12 +56,12 @@ test_input <- function(input, inputs, auto_input = FALSE, error_call = caller_en
     }
   }
   if (length(input) == 0L) {
-    cli_abort(c("Input {backtick(deparse(substitute(input)))} must have at least 1 location.",
+    cli::cli_abort(c("Input {backtick(deparse(substitute(input)))} must have at least 1 location.",
                 "i" = "Please choose either {add_or(style_bold(col_green(backtick(new_inputs))))} instead."),
               wrap = TRUE, call = error_call)
   }
   if (any(!input %in% inputs)) {
-    cli_abort(c(
+    cli::cli_abort(c(
       "Wrong {backtick(deparse(substitute(input)))}",
       "x" = "The {backtick(deparse(substitute(input)))} {style_bold(col_red(backtick(input)))} you provided is not recognized.",
       "i" = "Please choose either {add_or(style_bold(col_green(backtick(new_inputs))))} instead."
@@ -106,8 +106,8 @@ test_data <- function(expr_data, attr_data) {
              (`probes` in rows and `barcode` in columns)."))
 
   }
-  if (!inherits_any(attr_data, c("tbl_df", "tbl", "data.frame"))) {
-    cli_abort(c("The attribute data must be a data frame.",
+  if (!rlang::inherits_any(attr_data, c("tbl_df", "tbl", "data.frame"))) {
+    cli::cli_abort(c("The attribute data must be a data frame.",
                 "x" = "The class {style_bold(col_cyan(backtick(class(attr_data))))} of \\
                 attribute data {?is/are} not supported.",
                 "i" = "Please make attribute data as data frame."))
@@ -116,7 +116,7 @@ test_data <- function(expr_data, attr_data) {
   test_column(c("barcode", "compound_name", "dose_level", "time_level"), attr_data)
   match_bar <- colnames(expr_data) %in% attr_data$barcode
   if (any(!match_bar)) {
-    cli_abort(c("All columns/samples in expression data must given in metadata.",
+    cli::cli_abort(c("All columns/samples in expression data must given in metadata.",
                 "x" = "{style_bold(col_cyan(backtick(colnames(expr_data)[match_bar])))} column{?s} \\
                 {?is/are} not described in the metadata.",
                 "i" = "Please remove unspecified columns from the expression data. After that you \\
@@ -152,9 +152,9 @@ test_data <- function(expr_data, attr_data) {
 #' # test_group(group1, group2, list("compound5"))
 #' }
 #' @export
-test_group <- function(..., error_call = caller_env()) {
-  comps_gr <- list2(...)
-  if (length(comps_gr) == 1 && is_bare_list(comps_gr[[1]])) {
+test_group <- function(..., error_call = rlang::caller_env()) {
+  comps_gr <- rlang::list2(...)
+  if (length(comps_gr) == 1 && rlang::is_bare_list(comps_gr[[1]])) {
     comps_gr <- comps_gr[[1]]
 }
   # if (!length(comps_gr)>1) {
@@ -167,7 +167,7 @@ test_group <- function(..., error_call = caller_env()) {
   right_class <- unlist(lapply(right_arg, class))
   if (length(unique(right_class))>1) {
     right_name <- sapply(substitute(list(...))[-1], as.character)[arg_checker]
-    cli_abort(c("Invalid inpute of compound groups.",
+    cli::cli_abort(c("Invalid inpute of compound groups.",
                 "x" = "You have supplied the object{?s} {paste(style_bold(col_red(right_name)), style_bold(col_blue(right_class)), sep = ' as a ')}
                 class{?, respectively}.",
                 "i" = "Please provide the compound groups as either a list or multiple vectors containing compound names or abbreviations."),
@@ -177,7 +177,7 @@ test_group <- function(..., error_call = caller_env()) {
   wrong_arg <- sapply(substitute(list(...))[-1], as.character)[!arg_checker]
   if (!all(arg_checker)) {
     arg_nm <- paste("argument_name", LETTERS[1:length(wrong_arg)])
-    cli_abort(c("Invalid use of the argument in the function.",
+    cli::cli_abort(c("Invalid use of the argument in the function.",
                 "x" = "You have supplied object{?s} {style_bold(col_red(wrong_arg))}  without assigning
                 {?it/them} as an argument{?s}. However, {?it/they} {?does/may} not contain any compound names.",
                 "i" = "Please provide the argument explicitly by supplying the compound names correctly.
@@ -216,8 +216,8 @@ test_element <- function(input, elements, error_call = caller_env()) {
   } else {
     new_inputs <- elements
   }
-  if (is_missing(input) | is_empty(input)) {
-    cli_abort(c("{backtick(deparse(substitute(input)))} is missing.",
+  if (rlang::is_missing(input) | rlang::is_empty(input)) {
+    cli::cli_abort(c("{backtick(deparse(substitute(input)))} is missing.",
                 "i" = "Please choose either {add_or(style_bold(col_green(backtick(new_inputs))))} instead."),
               wrap = TRUE, call = error_call)
   }
@@ -228,7 +228,7 @@ test_element <- function(input, elements, error_call = caller_env()) {
   # }
 
   if (length(input) == 0L) {
-    cli_abort(c("Input {backtick(deparse(substitute(input)))} must have at least 1 location.",
+    cli::cli_abort(c("Input {backtick(deparse(substitute(input)))} must have at least 1 location.",
                 "i" = "Please choose either {add_or(style_bold(col_green(backtick(new_inputs))))} instead."),
               wrap = TRUE, call = error_call)
   }
@@ -241,7 +241,7 @@ test_element <- function(input, elements, error_call = caller_env()) {
     new_element <- miss_element
   }
   if (any(!exist_idx)) {
-    cli_abort(c("Input {backtick(deparse(substitute(input)))} must available in the \\
+    cli::cli_abort(c("Input {backtick(deparse(substitute(input)))} must available in the \\
                 {backtick(deparse(substitute(elements)))}.",
                 "x" = "{style_bold(col_red(backtick(new_element)))} element{?s} \\
                 {?is\are} not available in {backtick(deparse(substitute(elements)))}.",
@@ -271,7 +271,7 @@ test_element <- function(input, elements, error_call = caller_env()) {
 #' @export
 test_column <- function(column, df) {
   if (! (is.data.frame(df) | tibble::is_tibble(df) || is.list(df))) {
-    cli_abort(c("{.arg df} must be a `data.frame` or `tibble` or `list`.",
+    cli::cli_abort(c("{.arg df} must be a `data.frame` or `tibble` or `list`.",
                 "i" = "Please provide the correct {.arg df}."))
   }
   columns <- names(df)
@@ -281,7 +281,7 @@ test_column <- function(column, df) {
     new_columns <- columns
   }
   if (length(column) == 0) {
-    cli_abort(c("Input {gsub('_', ' ', deparse(substitute(column)))} must have at least 1 location.",
+    cli::cli_abort(c("Input {gsub('_', ' ', deparse(substitute(column)))} must have at least 1 location.",
                 "i" = "Please select column from {style_italic(col_blue(backtick(new_columns)))} \\
                 ,or provide the correct {backtick(deparse(substitute(df)))}."))
   }
@@ -301,7 +301,7 @@ test_column <- function(column, df) {
     new_column <- miss_col
   }
   if (any(!exist_idx)) {
-    cli_abort(c("Input {.arg column} must available in the {backtick(deparse(substitute(df)))}.",
+    cli::cli_abort(c("Input {.arg column} must available in the {backtick(deparse(substitute(df)))}.",
                 "x" = "{style_bold(col_red(backtick(new_column)))} column{?s} \\
                 {?is\are} not available in {backtick(deparse(substitute(df)))}.",
                 "i" = "Please select column from {style_italic(col_blue(backtick(new_columns)))} \\
@@ -332,13 +332,13 @@ test_column <- function(column, df) {
 #' @export
 test_datastr <- function(expr_str) {
   if (!is.list(expr_str) & !inherits(expr_str, "ToxAssay")) {
-    cli_abort(c("{.var expr_str} must be object of class `ToxAssay` or `list`.",
+    cli::cli_abort(c("{.var expr_str} must be object of class `ToxAssay` or `list`.",
                 "x" = "The class {style_bold(col_cyan(backtick(class(expr_str))))} of \\
                 {.var expr_str} is not supported.",
                 "i" = "Please provide {.var expr_str} as a list of size 5
                 (for `group`, `compound`, `dose`, `time` and `replication`)."))
   } else if (length(expr_str)  !=  5) {
-    cli_abort(c("The length of {.var expr_str} must be 5.",
+    cli::cli_abort(c("The length of {.var expr_str} must be 5.",
                 "i" = "You have supplied a list {.var expr_str} of size {length(expr_str)}, please
                 make sure {.var expr_str} has a length of 5
                 (for `group`, `compound`, `dose`, `time` and `replication`)."))
@@ -380,27 +380,27 @@ test_datastr <- function(expr_str) {
 #' }
 #' @export
 is_compound <- function(compounds,
-                        database = missing_arg(),
-                        species = missing_arg(),
-                        data_type = missing_arg(),
-                        tissue = missing_arg(),
-                        dose_type = missing_arg(),
-                        error_call = caller_env()) {
+                        database = rlang::missing_arg(),
+                        species = rlang::missing_arg(),
+                        data_type = rlang::missing_arg(),
+                        tissue = rlang::missing_arg(),
+                        dose_type = rlang::missing_arg(),
+                        error_call = rlang::caller_env()) {
 
-  if (is_empty(compounds)) {
-    cli_abort(c("{.var comp_name} must be non-empty.",
+  if (rlang::is_empty(compounds)) {
+    cli::cli_abort(c("{.var comp_name} must be non-empty.",
                 "i" = "You have supplied an empty vector, please provide compound(s) name instred.")
               , call = error_call)
   }
-  if (is_missing(database)) {
+  if (rlang::is_missing(database)) {
     comp_tg <- compounds_tggates
     comp_dm <- dm_metadata
     available_com <- unique(c(comp_tg$compound_name, comp_dm$Compound))
     comp_is <- compounds %in% comp_tg$compound_name
     if (any(!comp_is)) {
-      avail_tgp <- englue("tggates_compounds()")
-      avail_dm <- englue("dm_compounds()")
-      cli_abort(c("Invalid compound name.",
+      avail_tgp <- rlang::englue("tggates_compounds()")
+      avail_dm <- rlang::englue("dm_compounds()")
+      cli::cli_abort(c("Invalid compound name.",
                   "x" = "{style_bold(col_red(backtick(compounds[!comp_is])))} compound{?s} \\
                 {?is/are} not available in open TG-GATEs and DrugMatrix database.",
                   "i" = "Please find the name of available compound by calling the function \\
@@ -421,8 +421,8 @@ is_compound <- function(compounds,
                                         dose_type = dose_type)
       comp_is <- compounds %in% comp_tggates
       if (any(!comp_is)) {
-        avail_com <- englue("tggates_compounds()")
-        cli_abort(c("Compound must available in open TG-GATEs database.",
+        avail_com <- rlang::englue("tggates_compounds()")
+        cli::cli_abort(c("Compound must available in open TG-GATEs database.",
                     "x" = "{style_bold(col_red(backtick(compounds[!comp_is])))} compound name{?s} \\
                 {?is/are} not available in open TG-GATEs database.",
                     "i" = "Please find the name of available compound by calling the function {style_italic(col_blue(backtick(avail_com)))}.")
@@ -433,8 +433,8 @@ is_compound <- function(compounds,
       comp_dm <- drugmatrix_compounds(tissue = tissue)
       comp_is <- compounds %in% comp_dm
       if (any(!comp_is)) {
-        avail_com <- englue(" drugmatrix_compounds()")
-        cli_abort(c("Compound must available in DrugMatrix database.",
+        avail_com <- rlang::englue(" drugmatrix_compounds()")
+        cli::cli_abort(c("Compound must available in DrugMatrix database.",
                     "x" = "{style_bold(col_red(backtick(compounds[!comp_is])))} compound name{?s} \\
                 {?is/are} not available in DrugMatrix database.",
                     "i" = "Please find the name of available compound by calling the function {style_italic(col_blue(backtick(avail_com)))}.")
@@ -483,7 +483,7 @@ is_metadata <- function(metadata) {
   database <- unique(metadata$database)
   test_input(database, c("tggates", "drugmatrix"))
   if (length(database) > 1) {
-    cli_abort(c("More than one `database` not allowed.",
+    cli::cli_abort(c("More than one `database` not allowed.",
                 "x" = "{style_bold(col_red(backtick(metadata)))} database {?is/are}  \\
                 present in the metadata.",
                 "i" = "Please use metadata with only one `database` for analysis.")
@@ -491,7 +491,7 @@ is_metadata <- function(metadata) {
   }
   FC <- unique(metadata$fc)
   if (length(FC) > 1) {
-    cli_abort(
+    cli::cli_abort(
       c("Data must be unique type.",
         "x" = "You have used both `FC` and `normal` data.",
         "i" = "Please use only one type either `FC` or `normal` data.")
@@ -504,28 +504,28 @@ is_metadata <- function(metadata) {
     tissue =  unique(metadata$organ_id)
     dose_type =  unique(metadata$sin_rep_type)
     if (length(species) > 1) {
-      cli_abort(c("More than one `species` not allowed.",
+      cli::cli_abort(c("More than one `species` not allowed.",
                   "x" = "{style_bold(col_red(backtick(species)))} species {?is/are}  \\
                 present in the metadata.",
                   "i" = "Please use metadata with only one `species` for subsequent analysis.")
                 , call = error_call)
     }
     if (length(data_type) > 1) {
-      cli_abort(c("More than one `data_type` not allowed.",
+      cli::cli_abort(c("More than one `data_type` not allowed.",
                   "x" = "{style_bold(col_red(backtick(data_type)))} test type{?s} {?is/are}  \\
                 present in the metadata.",
                   "i" = "Please use metadata with only one `data_type` for subsequent analysis.")
                 , call = error_call)
     }
     if (length(tissue) > 1) {
-      cli_abort(c("More than one `tissue` not allowed.",
+      cli::cli_abort(c("More than one `tissue` not allowed.",
                   "x" = "{style_bold(col_red(backtick(tissue)))} tissue{?s} {?is/are}  \\
                 present in the metadata.",
                   "i" = "Please use metadata with only one `tissue` for subsequent analysis.")
                 , call = error_call)
     }
     if (length(dose_type) > 1) {
-      cli_abort(c("More than one `dose_type` not allowed.",
+      cli::cli_abort(c("More than one `dose_type` not allowed.",
                   "x" = "{style_bold(col_red(backtick(dose_type)))} experiment type{?s} {?is/are} \\
                 present in the attribute data.",
                   "i" = "Please use attribute data with only one `dose_type` for subsequent analysis.")
@@ -535,7 +535,7 @@ is_metadata <- function(metadata) {
   if (identical(database, "drugmatrix")) {
     tissue =  unique(metadata$organ_id)
     if (length(tissue) > 1) {
-      cli_abort(c("More than one `tissue` not allowed.",
+      cli::cli_abort(c("More than one `tissue` not allowed.",
                   "x" = "{style_bold(col_red(backtick(tissue)))} tissue{?s} {?is/are}  \\
                 present in the metadata.",
                   "i" = "Please use metadata with only one `tissue` for subsequent analysis.")
