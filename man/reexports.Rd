@@ -52,12 +52,13 @@
 \alias{\%dopar\%}
 \alias{\%do\%}
 \alias{is_empty}
+\alias{is_missing}
+\alias{caller_env}
 \alias{.data}
 \alias{englue}
 \alias{list2}
 \alias{is_bare_list}
 \alias{inherits_any}
-\alias{is_missing}
 \alias{missing_arg}
 \alias{parse_expr}
 \alias{cli_alert_warning}
@@ -120,7 +121,7 @@ below to see their documentation.
 
   \item{readr}{\code{\link[readr:write_delim]{write_csv}}, \code{\link[readr:write_delim]{write_csv}}, \code{\link[readr:write_delim]{write_tsv}}}
 
-  \item{rlang}{\code{\link[rlang:dot-data]{.data}}, \code{\link[rlang]{englue}}, \code{\link[rlang]{inherits_any}}, \code{\link[rlang:bare-type-predicates]{is_bare_list}}, \code{\link[rlang]{is_empty}}, \code{\link[rlang:missing_arg]{is_missing}}, \code{\link[rlang]{list2}}, \code{\link[rlang]{missing_arg}}, \code{\link[rlang]{parse_expr}}}
+  \item{rlang}{\code{\link[rlang:dot-data]{.data}}, \code{\link[rlang:stack]{caller_env}}, \code{\link[rlang]{englue}}, \code{\link[rlang]{inherits_any}}, \code{\link[rlang:bare-type-predicates]{is_bare_list}}, \code{\link[rlang]{is_empty}}, \code{\link[rlang:missing_arg]{is_missing}}, \code{\link[rlang:missing_arg]{is_missing}}, \code{\link[rlang]{list2}}, \code{\link[rlang]{missing_arg}}, \code{\link[rlang]{parse_expr}}}
 
   \item{scales}{\code{\link[scales]{rescale}}}
 

@@ -29,11 +29,6 @@ valid_inputs <- c("A", "B", "C")
 
 # Example 1: Correct input
 test_input(input = "A", inputs = valid_inputs)
-
-# Example 2: Auto-correct input (if auto_input is TRUE)
-input_val = c("A", "D")
-test_input(input = input_val, inputs = valid_inputs, auto_input = TRUE)
-
 # Example 3: Handle missing input
 input_val = NULL
 test_input(input = input_val, inputs = valid_inputs)

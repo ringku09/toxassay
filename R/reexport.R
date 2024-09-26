@@ -222,6 +222,15 @@ stats::median
  #' @export
  rlang::is_empty
 
+ #' @importFrom rlang is_missing
+ #' @export
+ rlang::is_missing
+
+ #' @importFrom rlang caller_env
+ #' @export
+ rlang::caller_env
+
+
  #' @importFrom rlang .data
  #' @export
  rlang::.data
