@@ -51,7 +51,7 @@ get_enrichment <- function(gene_df,
   } else if (path_n <= total_path) {
     enrich_res <- enrichment[1 : path_n, ]
   } else if (path_n > total_path) {
-    cli_alert_warning(c("You have selected {path_n} pathway{?s}, but only enriched {total_path} pathway{?s}."))
+    cli::cli_alert_warning(c("You have selected {path_n} pathway{?s}, but only enriched {total_path} pathway{?s}."))
     enrich_res <- enrichment[1 : total_path, ]
   }
   path_tab <- enrich_res %>%
@@ -123,8 +123,8 @@ enrichment_netdata <- function(gene_df,
   gene_name <- gene_df %>%
     dplyr::select(gene_symbol) %>%
     dplyr::pull()
-  edge_data <- tibble(from = unlist(rep_path), to = unlist(gene_list), weight = NA) %>%
-    filter(to %in% gene_name)
+  edge_data <- tibble::tibble(from = unlist(rep_path), to = unlist(gene_list), weight = NA) %>%
+    dplyr::filter(to %in% gene_name)
   enrc_genes <- unique(edge_data$to)
   if(any(grepl(".*e-", enrc_tab$p_value))){
     weight <- format(enrc_tab$p_value, scientific = TRUE)
@@ -160,8 +160,8 @@ enrichment_netdata <- function(gene_df,
     dplyr::group_by(name) %>%
     dplyr::summarise(count = n())
 
-  gene_data <- left_join(gene_count, gene_pval, by = "name")
-  vertx_data <- bind_rows(path_data, gene_data)
+  gene_data <- dplyr::left_join(gene_count, gene_pval, by = "name")
+  vertx_data <- dplyr::bind_rows(path_data, gene_data)
 
   net_data <- list(vertices = vertx_data, edges = edge_data)
   N <- sum(net_data$vertices$nodes == "gene")
