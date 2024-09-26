@@ -118,23 +118,23 @@ get_avgFC <- function(...,
                               output_dir = output_dir,
                               error_call = error_call)
 
-  gr_tbl <- tibble(group = factor(names(comps_gr), levels = names(comps_gr)),
+  gr_tbl <- tibble::tibble(group = factor(names(comps_gr), levels = names(comps_gr)),
                    avg_x = as.vector(avg_expr$group_data))
   idx <-lapply(comps_gr, function(x) which(compounds %in% x))
   grp <- vector("character", length = length(compounds))
   for (i in 1:length(idx)) grp[idx[[i]]] <- names(comps_gr[i])
-  com_tbl <- tibble(group = factor(grp, levels = names(idx)),
+  com_tbl <- tibble::tibble(group = factor(grp, levels = names(idx)),
                     compound = factor(compounds, levels = compounds),
                     avg_x = as.vector(avg_expr$compound_data))
 
   dose_df <- metadata %>%
-    select(c(compound_name, dose_level)) %>%
-    distinct(compound_name, dose_level, .keep_all = TRUE)
+    dplyr::select(c(compound_name, dose_level)) %>%
+    dplyr::distinct(compound_name, dose_level, .keep_all = TRUE)
 
   idx1 <-lapply(comps_gr, function(x) which(dose_df$compound_name %in% x))
   grp1 <- vector("character", length = nrow(dose_df))
   for (i in 1:length(idx1)) grp1[idx1[[i]]] <- names(comps_gr[i])
-  dose_tbl <- tibble(
+  dose_tbl <- tibble::tibble(
     group = factor(grp1, levels = names(idx1)),
     compound = factor(dose_df$compound_name, levels = compounds),
     dose = factor(dose_df$dose_level, levels = unique(dose_df$dose_level)),
@@ -142,13 +142,13 @@ get_avgFC <- function(...,
   )
 
   time_df <- metadata %>%
-    select(c(compound_name, dose_level, time_level)) %>%
-    distinct(compound_name, dose_level, time_level, .keep_all = TRUE)
+    dplyr::select(c(compound_name, dose_level, time_level)) %>%
+    dplyr::distinct(compound_name, dose_level, time_level, .keep_all = TRUE)
 
   idx2 <- lapply(comps_gr, function(x) which(time_df$compound_name %in% x))
   grp2 <- vector("character", length = nrow(time_df))
   for (i in 1:length(idx2)) grp2[idx2[[i]]] <- names(comps_gr[i])
-  time_tbl <- tibble(
+  time_tbl <- tibble::tibble(
     group = factor(grp2, levels = names(idx2)),
     compound = factor(time_df$compound_name, levels = compounds),
     dose = factor(time_df$dose_level, levels = unique(dose_df$dose_level)),
@@ -159,7 +159,7 @@ get_avgFC <- function(...,
   idx3 <- lapply(comps_gr, function(x) which(metadata$compound_name %in% x))
   grp3 <- vector("character", length = nrow(metadata))
   for (i in 1:length(idx3)) grp3[idx3[[i]]] <- names(comps_gr[i])
-  sample_tbl <- tibble(
+  sample_tbl <- tibble::tibble(
     group = factor(grp3, levels = names(idx3)),
     compound = factor(metadata$compound_name, levels = compounds),
     dose = factor(metadata$dose_level, levels = unique(metadata$dose_level)),
@@ -213,16 +213,16 @@ get_subset <- function(...,
                        time = NULL,
                        multicore = FALSE,
                        store = FALSE,
-                       output_dir = missing_arg(),
-                       error_call = caller_env()) {
+                       output_dir = rlang::missing_arg(),
+                       error_call = rlang::caller_env()) {
   if (!is.null(dose) & !all(dose %in% unique(metadata$dose_level))) {
-    cli_abort(c("The input dose level is incorrect.",
+    cli::cli_abort(c("The input dose level is incorrect.",
                 "x" = "Dose level ({style_bold(col_red(backtick(dose)))}) not match with the data.",
                 "i" = "Please choose dose level either {add_or(style_bold(col_green(backtick(unique(metadata$dose_level)))))} instead.")
               , call = error_call)
   }
   if (!is.null(time) & !any(time %in% unique(metadata$time_level))) {
-    cli_abort(c("The input time level is incorrect.",
+    cli::cli_abort(c("The input time level is incorrect.",
                 "x" = "Time level ({style_bold(col_red(backtick(time)))}) not match with the data.",
                 "i" = "Please choose time level either {add_or(style_bold(col_green(backtick(unique(metadata$time_level)))))} instead.")
               , call = error_call)
@@ -352,16 +352,16 @@ mean_subset <- function(...,
                            error_call = error_call)
   space_nest <- space_data$metadata %>%
     dplyr::group_by(compound_name, dose_level,time_level) %>%
-    nest()
+    tidyr::nest()
   space_barcd <- lapply(space_nest$data, function(x) x$barcode)
   barcd_expr <- lapply(space_barcd, function(x)
     rowMeans(space_data$expression[,match(x, colnames(space_data$expression))]))
   space_expr <- do.call(cbind, barcd_expr)
   lab <- set_names(names_format, space_data$metadata, "compound_name")
   space_attr <- space_nest %>%
-    select(-data) %>%
-    ungroup() %>%
-    mutate(sample_id = lab)
+    dplyr::select(-data) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(sample_id = lab)
   tgx_class <- vector(length = nrow(space_attr))
   for(i in 1:length(comps_gr)) {
     tgx_class[space_attr$compound_name %in% comps_gr[[i]]] <- names(comps_gr)[i]
