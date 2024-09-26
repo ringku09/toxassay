@@ -181,9 +181,25 @@
  #' @export
  cli::bg_red
 
+ #' @importFrom cli bg_red
+ #' @export
+ cli::bg_red
+
  #' @importFrom cli col_red
  #' @export
  cli::col_red
+
+ #' @importFrom cli cli_alert_info
+ #' @export
+ cli::cli_alert_info
+
+ #' @importFrom cli col_br_red
+ #' @export
+ cli::col_br_red
+
+ #' @importFrom cli cli_alert_success
+ #' @export
+ cli::cli_alert_success
 
  #----------------------------- import for `glue`--------------------
  #' @importFrom glue backtick

@@ -48,6 +48,8 @@
 \alias{bg_magenta}
 \alias{bg_red}
 \alias{col_red}
+\alias{cli_alert_info}
+\alias{col_br_red}
 \alias{backtick}
 \alias{glue}
 \alias{glue_collapse}
@@ -65,7 +67,7 @@ below to see their documentation.
 
   \item{Biobase}{\code{\link[Biobase]{exprs}}}
 
-  \item{cli}{\code{\link[cli:ansi-styles]{bg_magenta}}, \code{\link[cli:ansi-styles]{bg_red}}, \code{\link[cli:cli_alert]{cli_alert_warning}}, \code{\link[cli]{cli_ul}}, \code{\link[cli:ansi-styles]{col_red}}, \code{\link[cli:ansi-styles]{style_bold}}}
+  \item{cli}{\code{\link[cli:ansi-styles]{bg_magenta}}, \code{\link[cli:ansi-styles]{bg_red}}, \code{\link[cli:ansi-styles]{bg_red}}, \code{\link[cli:cli_alert]{cli_alert_info}}, \code{\link[cli:cli_alert]{cli_alert_warning}}, \code{\link[cli]{cli_ul}}, \code{\link[cli:ansi-styles]{col_br_red}}, \code{\link[cli:ansi-styles]{col_red}}, \code{\link[cli:ansi-styles]{style_bold}}}
 
   \item{doParallel}{\code{\link[doParallel]{registerDoParallel}}}
 
