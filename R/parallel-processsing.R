@@ -91,7 +91,7 @@ start_parallel <- function(multicore = TRUE, error_call = caller_env(),  ...) {
 
 #' Stop parallel setup
 #'
-#' The function `end_parallel()` is used to stop parallel processing.
+#' The function `stop_parallel()` is used to stop parallel processing.
 #'
 #' @param cluster Class of parallel object
 #' @param ... Additional parameter
@@ -101,8 +101,8 @@ start_parallel <- function(multicore = TRUE, error_call = caller_env(),  ...) {
 #' @export
 #'
 #' @examples
-#' cll <- startParallel(.parallel = 2)
-#' stopParallel(attr(cll, "cluster"))
+#' cll <- start_parallel()
+#' stop_parallel(attr(cll, "cluster"))
 stop_parallel <- function(cluster, ...)
 {
   parallel::stopCluster(cluster)

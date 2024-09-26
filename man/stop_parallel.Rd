@@ -15,9 +15,9 @@ stop_parallel(cluster, ...)
 Exit cluster
 }
 \description{
-The function \code{end_parallel()} is used to stop parallel processing.
+The function \code{stop_parallel()} is used to stop parallel processing.
 }
 \examples{
-cll <- startParallel(.parallel = 2)
-stopParallel(attr(cll, "cluster"))
+cll <- start_parallel()
+stop_parallel(attr(cll, "cluster"))
 }
