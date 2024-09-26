@@ -51,4 +51,4 @@ pak::pak("ringku09/toxassay")
 
 ## Getting help
 
-If you encounter a clear bug, please file an issue with a minimal reproducible example on [GitHub](https://github.com/ringku09/toxassay/issues). For questions and other discussion, please E-mail: [[ringku_740@yahoo.com](mailto:ringku_740@yahoo.com)].
+If you encounter a clear bug, please file an issue with a minimal reproducible example on [GitHub](https://github.com/ringku09/toxassay/issues). For questions and other discussion, please send an [[email](mailto:ringku_740@yahoo.com)].

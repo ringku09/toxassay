@@ -47,4 +47,5 @@ pak::pak("ringku09/toxassay")
 If you encounter a clear bug, please file an issue with a minimal
 reproducible example on
 [GitHub](https://github.com/ringku09/toxassay/issues). For questions and
-other discussion, please E-mail: \[<ringku_740@yahoo.com>\].
+other discussion, please send an
+\[[email](mailto:ringku_740@yahoo.com)\].
