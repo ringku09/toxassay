@@ -28,7 +28,7 @@ encompassing:
 - Development of optimized machine-learning classifiers for predicting
   the targeted toxicity in test samples of compounds.
 
-<img src="man/figures/workflow.png" width="880"/>
+<img src="man/figures/workflow.png" width="1420"/>
 
 ## Installation
 
