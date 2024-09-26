@@ -22,6 +22,7 @@ LinkingTo:
     RcppEigen
 Imports: 
     affy,
+    AnnotationDbi,
     arules,
     Biobase,
     cli,
@@ -29,14 +30,19 @@ Imports:
     dplyr,
     foreach,
     glue,
+    httr,
     igraph,
     magrittr,
+    methods,
     purrr,
+    rat2302.db,
     Rcpp,
     RcppEigen,
     readr,
     reshape2,
     rlang,
+    scales,
     STRINGdb,
     tibble,
-    tidyr
+    tidyr,
+    tidyselect
