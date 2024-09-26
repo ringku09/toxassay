@@ -84,7 +84,7 @@ direct_sum <- function(A, B) {
 # Find middle potion of bar plot for group to display text
 gr_barpos <- function(gr_data, var) {
   zz <- gr_data %>%
-    select({{var}})
+    dplyr::select({{var}})
   z <- as.vector(unlist(zz))
   if(all(z >= 0)) {
     txt_lev <- rev(cumsum(lag(rev(z), default = 0)) + rev(z)/2)
@@ -124,7 +124,7 @@ avg_fc <- function(x, y, FC = TRUE) {
 
 # destination path creator
 destination <- function(output_dir) {
-  if (is_missing(output_dir)) {
+  if (rlang::is_missing(output_dir)) {
     output_dir <- tempdir()
   }
   if(!file.exists(output_dir)) {
@@ -172,7 +172,7 @@ col_diff <- function(avg_data) {
 
 # with common legend
 com_legend <- function(gg_plot) {
-  tmp <- ggplot_gtable(ggplot_build(gg_plot))
+  tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(gg_plot))
   leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
   legend <- tmp$grobs[[leg]]
   return(legend)
@@ -191,7 +191,7 @@ block_fst <- function(x) {
 # compound name to abbreviation
 comp_abbr <- function(comp_name, error_call = caller_env()) {
   if (is_empty(comp_name)) {
-    cli_abort(c("{.var comp_name} must be non-empty.",
+    cli::cli_abort(c("{.var comp_name} must be non-empty.",
                 "i" = "You have supplied an empty vector, please provide `name` or, `abbreviation` instred.")
               , call = error_call)
   }
@@ -207,13 +207,13 @@ comp_abbr <- function(comp_name, error_call = caller_env()) {
   }
   avail_com <- glue::englue("tggates_compounds()")
   if (any(comp_is) & any(abbr_is)) {
-    cli_abort(c("Compound must be either in `name` or, `abbreviation`.",
+    cli::cli_abort(c("Compound must be either in `name` or, `abbreviation`.",
                 "x" = "Input {style_bold(col_blue(backtick(comp_name[comp_is])))} {?is/are} in compound name{?s} \\
                 and {style_bold(col_green(backtick(comp_name [abbr_is])))} {?is/are} in compound abbreviation{?s}.",
                 "i" = "Find available compound name/abbreviation in TG-GATEs by calling the function {style_italic(col_blue(backtick(avail_com)))}.")
               , call = error_call)
   } else if (all(!comp_is) & all(!abbr_is)) {
-    cli_abort(c("Compound must available in open TG-GATEs database.",
+    cli::cli_abort(c("Compound must available in open TG-GATEs database.",
                 "x" = "{style_bold(col_red(backtick(comp_name)))} compound{?s} name/abbrerviation \\
                 {?is/are} not available in open TG-GATEs database.",
                 "i" = "Please find the name of available compound by calling the function {style_italic(col_blue(backtick(avail_com)))}.")
@@ -223,13 +223,13 @@ comp_abbr <- function(comp_name, error_call = caller_env()) {
       if (sum(comp_is) > length(comp_name)/2) {
         idx <- match(comp_name[comp_is], comp_tg$compound_name)
         abbr <- comp_tg$compound_abbr[idx]
-        cli_alert_warning(c("Input {style_bold(col_red(backtick(comp_name[!comp_is])))} name{?s} of compound ",
+        cli::cli_alert_warning(c("Input {style_bold(col_red(backtick(comp_name[!comp_is])))} name{?s} of compound ",
                            "{?is/are} removed from the compound list, ",
                            "because {?this/these} input compound{?s} {?is/are} not available ",
                            "in open TG-GATEs database."),
                           wrap = TRUE)
       } else {
-        cli_abort(c("Compound must available in open TG-GATEs database.",
+        cli::cli_abort(c("Compound must available in open TG-GATEs database.",
                     "x" = "Input ({style_bold(col_red(backtick(comp_name[!comp_is])))}) name{?s} \\
                     of compound {?is/are} not available in open TG-GATEs database.",
                     "i" = "Please choose compound from the open TG-GATEs database,  \\
@@ -242,13 +242,13 @@ comp_abbr <- function(comp_name, error_call = caller_env()) {
       if (sum(abbr_is) > length(comp_name)/2) {
         idx <- match(comp_name[abbr_is], comp_tg$compound_abbr)
         abbr <- comp_tg$compound_abbr[idx]
-        cli_alert_warning(c("Input {style_bold(col_red(backtick(comp_name[!abbr_is])))} abbreviation{?s} of ",
+        cli::cli_alert_warning(c("Input {style_bold(col_red(backtick(comp_name[!abbr_is])))} abbreviation{?s} of ",
                            "compound{?s} {?is/are} removed from the compound list, ",
                            "because {?this/these} compound{?s} {?is/are} not available ",
                            "in open TG-GATEs database."),
                           wrap = TRUE)
       } else {
-        cli_abort(c("Compound must available in open TG-GATEs database.",
+        cli::cli_abort(c("Compound must available in open TG-GATEs database.",
                     "x" = "Input ({style_bold(col_red(backtick(comp_name[!abbr_is])))}) \\
                     abbreviation{?s} of compound {?is/are} not available in open TG-GATEs database.",
                     "i" = "Please choose compound from the open TG-GATEs database,  \\
@@ -263,15 +263,15 @@ comp_abbr <- function(comp_name, error_call = caller_env()) {
 # abbreviation or combination of abbreviation and compound name to compound name
 abbr2name <- function(comp_abbr, error_call = caller_env()) {
   if (is_empty(comp_abbr)) {
-    cli_abort(c("{.var comp_abbr} must be non-empty.",
+    cli::cli_abort(c("{.var comp_abbr} must be non-empty.",
                 "i" = "You have supplied an empty vector, please provide `name` instred.")
               , call = error_call)
   }
   comp_tg <- compounds_tggates
   comp_out <- comp_abbr %in% c(comp_tg$compound_abbr, comp_tg$compound_name)
-  avail_com <- englue("tggates_compounds()")
+  avail_com <- rlang::englue("tggates_compounds()")
   if (any(!comp_out)) {
-    cli_abort(c("Compound name must available in open TG-GATEs database.",
+    cli::cli_abort(c("Compound name must available in open TG-GATEs database.",
                 "x" = "{style_bold(col_red(backtick(comp_abbr[!comp_out])))} compound{?s} name \\
                 {?is/are} not available in open TG-GATEs database.",
                 "i" = "Please find available compound name by calling the function {style_italic(col_blue(backtick(avail_com)))}.")
@@ -284,12 +284,12 @@ abbr2name <- function(comp_abbr, error_call = caller_env()) {
   }
   name_is <- comp_abbr %in% comp_tg$compound_name
   if (all(name_is)) {
-    cli_alert_warning(c("Input {style_bold(col_red(backtick(comp_abbr)))} compound{?s}",
+    cli::cli_alert_warning(c("Input {style_bold(col_red(backtick(comp_abbr)))} compound{?s}",
                         "{?is/are} already in name{?s},  no need to convert."),
                       wrap = TRUE)
     name <- comp_abbr
   } else if (any(name_is)) {
-    cli_alert_warning(c("Input {.var comp_abbr} {style_bold(col_blue(backtick(comp_abbr[name_is])))} ",
+    cli::cli_alert_warning(c("Input {.var comp_abbr} {style_bold(col_blue(backtick(comp_abbr[name_is])))} ",
                         "{?is/are} already in name{?s}"),
                       wrap = TRUE)
     rem_abbr <- comp_abbr[!name_is]
@@ -309,28 +309,28 @@ get_dtype <- function(attr_df, error_call = caller_env()) {
   organ <- unique(attr_df$organ_id)
   sin_rep <- unique(attr_df$sin_rep_type)
   if (length(species) > 1) {
-    cli_abort(c("More than one `species` not allowed.",
+    cli::cli_abort(c("More than one `species` not allowed.",
                 "x" = "{style_bold(col_red(backtick(species)))} species {?is/are}  \\
                 present in the attribute data.",
                 "i" = "Please use attribute data with only one `species` to get appropiate data type.")
               , call = error_call)
   }
   if (length(test_type) > 1) {
-    cli_abort(c("More than one `test_type` not allowed.",
+    cli::cli_abort(c("More than one `test_type` not allowed.",
                 "x" = "{style_bold(col_red(backtick(species)))} test type{?s} {?is/are}  \\
                 present in the attribute data.",
                 "i" = "Please use attribute data with only one `test_type` to get appropiate data type.")
               , call = error_call)
   }
   if (length(organ) > 1) {
-    cli_abort(c("More than one `organ` not allowed.",
+    cli::cli_abort(c("More than one `organ` not allowed.",
                 "x" = "{style_bold(col_red(backtick(species)))} organ{?s} {?is/are}  \\
                 present in the attribute data.",
                 "i" = "Please use attribute data with only one `organ` to get appropiate data type.")
               , call = error_call)
   }
   if (length(sin_rep) > 1) {
-    cli_abort(c("More than one `sin_rep_type` not allowed.",
+    cli::cli_abort(c("More than one `sin_rep_type` not allowed.",
                 "x" = "{style_bold(col_red(backtick(species)))} experiment type{?s} {?is/are} \\
                 present in the attribute data.",
                 "i" = "Please use attribute data with only one `sin_rep_type` to get appropiate data type.")
@@ -574,15 +574,17 @@ add_or <- function(vec) {
 
 
 
-check_internet <- function(site, time_out = 10) {
+check_internet <- function(site, time_out = 10, error_call = rlang::caller_env()) {
   if (!curl::has_internet()) {
-    cli_abort(c("No internet connection.",
-                "i" = "Please connect an internet and try again."))
+    cli::cli_abort(c("No internet connection.",
+                "i" = "Please connect an internet and try again."),
+                call = error_call)
   }
   response <- httr::GET(site, httr::timeout(time_out))
   if (!httr::status_code(response) == 200) {
     cli_abort(c("{gsub('_', ' ', deparse(substitute(site)))} FTP server not responding.",
-                "i" = "Please try again later."))
+                "i" = "Please try again later."),
+              call = error_call)
   }
 }
 
@@ -606,31 +608,31 @@ set_names <- function(level, metadata, name_column) {
   return(col_names)
 }
 
-trans_color <- function(color, n_color=10) {
-  lighten_color <- colorRampPalette(c(color, "#FFFFFF"))
-  light_colors <- lighten_color(n_color+1)
-  col_code <- light_colors[1:n_color]
-  return(col_code)
-}
-
-
-color_light <- function(color, alpha) {
-  lighten_color <- colorRampPalette(c(color, "#FFFFFF"))
-  light_colors <- rev(lighten_color(11))
-  col_code <- light_colors[alpha*10+1]
-  return(col_code)
-}
-
-node_color <- function(n_nodes) {
-  node_colors <- Polychrome::createPalette(n_nodes,
-                                          c("#ff0000", "#00ff00", "#0000ff"))
-  return(node_colors)
-}
-
-edge_color <- function(node_colors, alpha = 0.5) {
-   edge_colors <- sapply(node_colors, FUN = color_light, alpha = alpha)
-   return(edge_colors)
- }
+# trans_color <- function(color, n_color=10) {
+#   lighten_color <- dichromat::colorRampPalette(c(color, "#FFFFFF"))
+#   light_colors <- lighten_color(n_color+1)
+#   col_code <- light_colors[1:n_color]
+#   return(col_code)
+# }
+#
+#
+# color_light <- function(color, alpha) {
+#   lighten_color <- colorRampPalette(c(color, "#FFFFFF"))
+#   light_colors <- rev(lighten_color(11))
+#   col_code <- light_colors[alpha*10+1]
+#   return(col_code)
+# }
+#
+# node_color <- function(n_nodes) {
+#   node_colors <- Polychrome::createPalette(n_nodes,
+#                                           c("#ff0000", "#00ff00", "#0000ff"))
+#   return(node_colors)
+# }
+#
+# edge_color <- function(node_colors, alpha = 0.5) {
+#    edge_colors <- sapply(node_colors, FUN = color_light, alpha = alpha)
+#    return(edge_colors)
+#  }
 
 
 #' Generate Random Samples from a Dirichlet Distribution
