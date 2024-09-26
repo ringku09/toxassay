@@ -50,6 +50,7 @@
 \alias{col_red}
 \alias{backtick}
 \alias{glue}
+\alias{glue_collapse}
 \alias{nest}
 \alias{pivot_wider}
 \alias{tibble}
@@ -72,7 +73,7 @@ below to see their documentation.
 
   \item{foreach}{\code{\link[foreach:getDoParWorkers]{getDoParName}}, \code{\link[foreach]{getDoParWorkers}}, \code{\link[foreach]{registerDoSEQ}}}
 
-  \item{glue}{\code{\link[glue:quoting]{backtick}}, \code{\link[glue]{glue}}}
+  \item{glue}{\code{\link[glue:quoting]{backtick}}, \code{\link[glue]{glue}}, \code{\link[glue]{glue_collapse}}}
 
   \item{magrittr}{\code{\link[magrittr:pipe]{\%>\%}}}
 
