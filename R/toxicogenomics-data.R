@@ -53,15 +53,15 @@ tggates_compounds <- function(species = c("Rat", "Human"),
   test_input(tissue, auto_input = TRUE)
   test_input(dose_type, auto_input = TRUE)
   tggates_data <- compounds_tggates %>%
-    mutate(across(- c("compound_name", "compound_abbr"), ~ ifelse(is.na(.), 0, 1))) %>%
-    mutate(across(where(is.numeric), ~ . == 1))
+    dplyr::mutate(dplyr::across(- c("compound_name", "compound_abbr"), ~ ifelse(is.na(.), 0, 1))) %>%
+    dplyr::mutate(dplyr::across(where(is.numeric), ~ . == 1))
   if (identical(data_type, "in_vivo")) {
     query_column <- glue::glue("{species}_{data_type}_{tissue}_{dose_type}")
   } else {
     query_column <- glue::glue("{species}_{data_type}_{tissue}")
   }
   if (! query_column %in% names(tggates_data)[-(1:2)]) {
-    cli_abort(c("Invalid data type parameter selection",
+    cli::cli_abort(c("Invalid data type parameter selection",
                 "x" = "Data type {style_bold(col_red(backtick(query_column)))} is \\
                 not available in the open TG-GATEs database.",
                 "i" = " Please use one of the following valid parameter combinations: \\
@@ -133,9 +133,9 @@ drugmatrix_compounds <- function(tissue = c("Liver", "Kidney", "Heart", "Hepatoc
     dplyr::distinct()
   dm_comps$values <- 1
   dm_data <- dm_comps %>%
-    pivot_wider(names_from = Tissue, values_from = values, values_fill = 0) %>%
-    rename("Hepatocytes (in vitro)" = Hepatocytes) %>%
-    mutate(across(where(is.numeric), ~ . == 1))
+    tidyr::pivot_wider(names_from = Tissue, values_from = values, values_fill = 0) %>%
+    dplyr::rename("Hepatocytes (in vitro)" = Hepatocytes) %>%
+    dplyr::mutate(dplyr::across(where(is.numeric), ~ . == 1))
     tissue <- block_fst(tissue)
     test_input(tissue, auto_input = TRUE)
     if (identical(tissue, "Liver")) {
@@ -310,17 +310,18 @@ drugmatrix_link <- function(compounds, tissue = c("Liver", "Kidney", "Heart", "H
 ctd_link <- function(compounds,
                      association = c("cgixns", "genes_curated", "genes_inferred",
                                      "diseases", "diseases_curated", "diseases_inferred"),
-                     action_type = "ANY") {
+                     action_type = "ANY",
+                     error_call = rlang::error_call()) {
   compounds <- gsub(" ", "%20", compounds)
   ctd_compounds <- paste(compounds, collapse = "|")
   test_input(association, auto_input = TRUE)
   if (identical(association, "cgixns")) {
     if (is.null(action_type)) {
-      cli_abort(c(
+      cli::cli_abort(c(
         ".arg(action_type) must provided for association of type `cgixns`",
         "x" = "There is no data for {style_bold(col_red(backtick(compounds[wrong_com])))} compound{?s} in {style_bold(col_br_red(backtick(tissue)))} tissue.",
         "i" = "To get available compounds in {style_bold(col_br_red(backtick(tissue)))} tissue, call the function {style_italic(col_blue(backtick(avail_com)))}."
-      ))
+      ), call = error_call)
     }
     query_link <- glue::glue("https://ctdbase.org/tools/batchQuery.go?inputType=chem&inputTerms={ctd_compounds}&report={association}&actionTypes={action_type}&format=tsv")
   } else {
@@ -377,12 +378,12 @@ tggates_rawdata <- function(compound,
   check_internet(`Open_TG-GATEs`)
   temp_comp <- gsub("^.*/", "", data_link)
   sp_comp <- unlist(strsplit(temp_comp, "\\."))
-  dt_type <- glue_collapse(sp_comp[-c(1, length(sp_comp))],"-")
+  dt_type <- glue::glue_collapse(sp_comp[-c(1, length(sp_comp))],"-")
   out_path <- glue::glue("{output_dir}/{temp_comp}")
   start_time <- Sys.time()
   #utils::download.file(comp_link, out_path, quiet = TRUE)
   #curl::curl_download(comp_link, out_path)
-  cli_alert_info("Downloading open TG-GATEs perturbation data for {style_bold(col_red(backtick(sp_comp[1])))} ({col_br_red(dt_type)}):")
+  cli::cli_alert_info("Downloading open TG-GATEs perturbation data for {style_bold(col_red(backtick(sp_comp[1])))} ({col_br_red(dt_type)}):")
   httr::GET(data_link,httr::write_disk(out_path, overwrite = TRUE), httr::progress())
   end_time <- Sys.time()
   req_time <- difftime(end_time, start_time, units = "secs")[[1]]
@@ -393,10 +394,10 @@ tggates_rawdata <- function(compound,
   #sp_comp <- unlist(strsplit(temp_comp, "\\."))
   #dt_type <- glue_collapse(sp_comp[-c(1, length(sp_comp))],"-")
   if(rm_zip) {
-    cli_alert_success(c("Downloaded {prettyunits::pretty_bytes(file_size)}",
+    cli::cli_alert_success(c("Downloaded {prettyunits::pretty_bytes(file_size)}",
                              " in {prettyunits::pretty_sec(as.numeric(req_time))}"))
   }else {
-    cli_alert_success("{style_bold(col_red(backtick(sp_comp[1])))} ({col_br_red(dt_type)}) data download has unsuccessful")
+    cli::cli_alert_success("{style_bold(col_red(backtick(sp_comp[1])))} ({col_br_red(dt_type)}) data download has unsuccessful")
   }
   path <- gsub(".zip$","" , out_path)
   attr_file <- paste(path, "Attribute.tsv", sep = "/")
@@ -445,14 +446,14 @@ drugmatrix_rawdata <- function(compounds,
   comp_link <- drugmatrix_link(compounds = compounds, tissue = tissue)
   DrugMatrix <- "https://www.ncbi.nlm.nih.gov/geo/download/"
   check_internet(DrugMatrix)
-  cli_alert_info("Downloading DrugMatrix perturbation data for {style_bold(col_red(backtick(compounds)))} in {col_green(tissue)} tissue:")
+  cli::cli_alert_info("Downloading DrugMatrix perturbation data for {style_bold(col_red(backtick(compounds)))} in {col_green(tissue)} tissue:")
   start_time <- Sys.time()
-  pb <- txtProgressBar(min = 0, max = length(comp_link), style = 3)
+  pb <- utils::txtProgressBar(min = 0, max = length(comp_link), style = 3)
   for (i in seq_along(comp_link)) {
     out_path <- glue::glue("{output_dir}/celfiles/{names(comp_link[i])}.CEL")
     # utils::download.file(url = comp_link[i], destfile = out_path, quiet = TRUE)
     httr::GET(comp_link[i],httr::write_disk(out_path, overwrite = TRUE))
-    setTxtProgressBar(pb, i)
+   utils::setTxtProgressBar(pb, i)
   }
   cat("\n")
   end_time <- Sys.time()
@@ -461,10 +462,10 @@ drugmatrix_rawdata <- function(compounds,
   file_info <- file.info(files)
   total_size <- sum(file_info$size, na.rm = TRUE)
   if(i == length(comp_link)) {
-    cli_alert_success(c("Downloaded {prettyunits::pretty_bytes(total_size)} ",
+    cli::cli_alert_success(c("Downloaded {prettyunits::pretty_bytes(total_size)} ",
                         " in {prettyunits::pretty_sec(as.numeric(req_time))}"), wrap = TRUE)
   }else {
-    cli_alert_success("Data download has unsuccessful. Please try again or check your internet connection")
+    cli::cli_alert_success("Data download has unsuccessful. Please try again or check your internet connection")
   }
   attr_data <- drugmatrix_dictionary(compounds, tissue) %>%
     dplyr::mutate(database = "drugmatrix")
@@ -509,26 +510,27 @@ drugmatrix_rawdata <- function(compounds,
 #' expr_data <- cel2exprs(cel_files)
 #' head(expr_data)
 #' }
-cel2exprs <- function(cel_files, organism = "rat", method = "rma", ...)
+cel2exprs <- function(cel_files, organism = "rat",
+                      method = "rma", error_call = rlang::caller_env(), ...)
   {
   if (identical(organism, "human")) {
     CDF = "hgu133plus2cdf"
   } else if(identical(organism, "rat")) {
     CDF = "rat2302cdf"
   } else {
-    cli_abort(c(
+    cli::cli_abort(c(
       "Wrong organism name",
       "x" = "The name of {.var organism} ({style_bold(col_blue(backtick(organism)))}) you provided is not recognized",
       "i" = "Please chosse either `human` or `rat` instead"
-      ))
+      ), call = error_call)
   }
   files <- tools::file_ext(cel_files)
   cel_path <- cel_files[which(files == "CEL")]
   if (!all(files == "CEL")) {
-    cli_warn(c(
+    cli::cli_warn(c(
       "Some of the paths you provided do not contain any CEL files.",
       i = "The following paths have been ignored:",
-      format_bullets_raw(rlang::set_names(cel_files[!files == "CEL"], "x"))
+      cli::format_bullets_raw(rlang::set_names(cel_files[!files == "CEL"], "x"))
       ))
   }
   read_cel <- affy::ReadAffy(filenames = cel_path, cdfname = CDF)
@@ -662,7 +664,7 @@ process_celfile <- function(compound_path,
     match_col <- match_col[!is.na(match_col)]
     exprs_data <-raw_expr[, match_col]
     temp_dict <- temp_dict %>%
-      mutate(fc = TRUE, .before = "arr_design")
+      dplyr::mutate(fc = TRUE, .before = "arr_design")
   }else {
     match_col <-  match(temp_dict$barcode, colnames(expr_data))
     match_col <- match_col[!is.na(match_col)]
@@ -674,13 +676,13 @@ process_celfile <- function(compound_path,
   if(!multicore) {
     req_time <- difftime(end_time, start_time, units = "secs")[[1]]
     rm_msg(start_msg)
-    cli_alert_success(c("Processing TG-GATEs perturbation data for {style_bold(col_red(backtick(comp_nm)))}",
+    cli::cli_alert_success(c("Processing TG-GATEs perturbation data for {style_bold(col_red(backtick(comp_nm)))}",
                     "({col_br_red(comp_typ)}) has been completed in ",
                     "{prettyunits::pretty_sec(as.numeric(req_time))}."))
   }else {
     req_time <- difftime(end_time, start_time, units = "secs")[[1]]
     rm_msg(start_msg)
-    cli_alert_success(c("Processing TG-GATEs perturbation data for {style_bold(col_red(backtick(comp_nm)))}",
+    cli::cli_alert_success(c("Processing TG-GATEs perturbation data for {style_bold(col_red(backtick(comp_nm)))}",
                         "({col_br_red(comp_typ)}) has been completed ",
                         "in {prettyunits::pretty_sec(as.numeric(req_time))} using {ii} worker{?s}."))
   }
@@ -772,10 +774,10 @@ process_drugmatrix <- function(rawdata_path,
                        store = FALSE,
                        output_dir = missing_arg(),
                        ...) {
-  comp_dict <- utils::read.table(file = glue("{rawdata_path}/Attribute.tsv"), sep = '\t', header = TRUE) # not work for human data
+  comp_dict <- utils::read.table(file = glue::glue("{rawdata_path}/Attribute.tsv"), sep = '\t', header = TRUE) # not work for human data
   comp_nm <- unique(comp_dict$Compound[comp_dict$Compound != "Control"])
   comp_typ <- unique(comp_dict$Tissue)
-  cli_alert_info("Processing DrugMatrix perturbation data for {style_bold(col_red(backtick(comp_nm)))} in {col_green(comp_typ)} tissue......")
+  cli::cli_alert_info("Processing DrugMatrix perturbation data for {style_bold(col_red(backtick(comp_nm)))} in {col_green(comp_typ)} tissue......")
   #comp_dict <- readr::read_tsv(file = attr_file, show_col_types = FALSE)  # not work for rat data
   cel_file <- paste(rawdata_path, "celfiles", sep = "/")
   file_path <- list.files(path = cel_file, pattern = "*.CEL", full.names = TRUE)
@@ -828,7 +830,7 @@ process_drugmatrix <- function(rawdata_path,
     match_col <- match_col[!is.na(match_col)]
     exprs_data <-raw_expr[, match_col]
     temp_dict <- temp_dict %>%
-      mutate(fc = TRUE)
+      dplyr::mutate(fc = TRUE)
   }else {
     match_col <-  match(temp_dict$barcode, colnames(expr_data))
     match_col <- match_col[!is.na(match_col)]
@@ -838,12 +840,12 @@ process_drugmatrix <- function(rawdata_path,
   if(!multicore) {
     req_time <- difftime(end_time, start_time, units = "secs")[[1]]
     # rm_msg(start_msg)
-    cli_alert_success(c("Data processing has been completed in ",
+    cli::cli_alert_success(c("Data processing has been completed in ",
                         "{prettyunits::pretty_sec(as.numeric(req_time))}."))
   }else {
     req_time <- difftime(end_time, start_time, units = "secs")[[1]]
     # rm_msg(start_msg)
-    cli_alert_success(c("Data processing has been completed ",
+    cli::cli_alert_success(c("Data processing has been completed ",
                         "in {prettyunits::pretty_sec(as.numeric(req_time))} using {ii} worker{?s}."))
   }
   if (store) {
@@ -1006,7 +1008,7 @@ get_ctd <- function(compounds,
   com_dis <- ctd_link(compounds = compounds,
                   association = disease_parm,
                   action_type = action_type)
-  cli_alert_info("Downloading CTD data for `compound-gene` and `Compound-disease`
+  cli::cli_alert_info("Downloading CTD data for `compound-gene` and `Compound-disease`
                  association using parameter {style_bold(col_red(backtick(gene_parm)))} and
                  {style_bold(col_red(backtick(disease_parm)))}, respectively", wrap = TRUE)
   # gene_data <- httr::GET(com_gene,
@@ -1027,7 +1029,7 @@ get_ctd <- function(compounds,
                                                        name_repair = janitor::make_clean_names,
                                                        col_select = -c(number_input)
                                                        ))
-  cli_alert_success(c("Downloaded completed"))
+  cli::cli_alert_success(c("Downloaded completed"))
   if (store) {
     output_dir <- destination(output_dir)
     gene_path <- glue::glue("{output_dir}/compound_gene.tsv")
