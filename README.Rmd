@@ -79,7 +79,7 @@ get_ctd(compounds = c("Ethanol", "Estriol"), gene_parm = "cgixns", disease_parm 
 <img src="man/figures/downloading.png" width="890"/>
 
 ### Differential expression analysis
-```{r}
+```{r, message = FALSE}
 library(toxassay)
 set.seed(100)
 sim_data <- simulate_tgxdata(n_de = 10, n_ee = 100, n_com = c(5,5), d=1)

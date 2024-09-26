@@ -88,14 +88,6 @@ get_ctd(compounds = c("Ethanol", "Estriol"), gene_parm = "cgixns", disease_parm 
 
 ``` r
 library(toxassay)
-#> Package 'toxassay' version 0.0.0.9000
-#> 
-#> To cite this R package in publications, run the command: `citation("toxassay")`.
-#> 
-#> Attaching package: 'toxassay'
-#> The following object is masked from 'package:stats':
-#> 
-#>     filter
 set.seed(100)
 sim_data <- simulate_tgxdata(n_de = 10, n_ee = 100, n_com = c(5,5), d=1)
 com_group <- list(non_toxic = paste0("Compound", 1:5), toxic = paste0("Compound", 6:10))
@@ -103,8 +95,6 @@ tgx_degs(com_group,
          ge_matrix = sim_data$expression, 
          metadata = sim_data$metadata, 
          gr_diff = TRUE, log10p = TRUE)
-#> • Total number of unique genes = 110 (110 probes)
-#> • Number of significant genes = 10 (at α = 0.05)
 #> # A tibble: 110 × 8
 #>   probe_id gene_symbol non_toxic toxic `non_toxic-toxic`  p_value log10p
 #> * <chr>    <chr>           <dbl> <dbl>             <dbl>    <dbl>  <dbl>
