@@ -3,7 +3,7 @@
 #' The function `start_parallel()` is used to setup parallel processing by appointing multiple
 #' workers for a sequence of similar task.
 #'
-#' @param .parallel Parallel computation (default is `TRUE`)
+#' @param multicore Parallel computation (default is `TRUE`)
 #' @param ... Additional parameter
 #'
 #' @return
@@ -17,7 +17,7 @@
 start_parallel <- function(multicore = TRUE, error_call = caller_env(),  ...) {
  if (!all(requireNamespace("parallel", quietly = TRUE),
           requireNamespace("doParallel", quietly = TRUE))) {
-   cli_abort(c("Packages `parallel` and `doParallel` required for parallelization!",
+   cli::cli_abort(c("Packages `parallel` and `doParallel` required for parallelization!",
                "i" = "Please install `parallel` and `doParallel`."),
              call = error_call)
  }
@@ -77,7 +77,7 @@ start_parallel <- function(multicore = TRUE, error_call = caller_env(),  ...) {
       doParallel::registerDoParallel(cl, cores = numCores)
       attr(multicore, "cluster") <- cl
     } else {
-      cli_abort(c(
+      cli::cli_abort(c(
         "Parallel type must be either `snow` or `multicores`.",
         "x" = "Parallel type of  {style_bold(col_red(backtick(parallelType)))} is invalid.",
         "i" = "Please use either `snow`, or `multicores` instread."
