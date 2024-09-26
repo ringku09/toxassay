@@ -8,10 +8,11 @@ The goal of toxassay is to ...
 
 ## Installation
 
-You can install the development version of toxassay like so:
+You can install the development version of toxassay from [GitHub](https://github.com/) with:
 
 ``` r
-# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
+# install.packages("pak")
+pak::pak("ringku09/toxassay")
 ```
 
 ## Example
