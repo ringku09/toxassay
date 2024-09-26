@@ -43,12 +43,12 @@ can install the development version of toxassay from GitHub.
 
 ``` r
 # install.packages("pak")
-pak::pak("ringku09/toxassay")
+pak::pak("FanLiuLab/toxassay")
 ```
 
 ## Usages
 
-### Download and preprocessing analysis ready data
+### Download and preprocess analysis-ready data
 
 In the current version of **ToxAssay**, users can download and process
 raw compound perturbation data from the [Open
@@ -56,7 +56,7 @@ TG-GATEs](https://dbarchive.biosciencedbc.jp/en/open-tggates/download.html)
 and [DrugMatrix](https://ntp.niehs.nih.gov/data/drugmatrix) databases,
 as well as curated relational data from the [CTD](https://ctdbase.org).
 
-Available compounds in databases.
+Available compounds in databases:
 
 ``` r
 # Compounds in Open TG-GATEs database
@@ -67,6 +67,9 @@ tggates_compounds(species = "Rat", data_type = "in_vivo", tissue = "Liver", dose
 # Data available for compounds in `Liver`
 drugmatrix_compounds(tissue = "Liver")
 ```
+
+Automatically download and process data by compound name from the
+databases:
 
 ``` r
 # Get data from Open TG-GATEs
@@ -80,6 +83,39 @@ get_ctd(compounds = c("Ethanol", "Estriol"), gene_parm = "cgixns", disease_parm 
 ```
 
 <img src="man/figures/downloading.png" width="890"/>
+
+### Differential expression analysis
+
+``` r
+library(toxassay)
+#> Package 'toxassay' version 0.0.0.9000
+#> 
+#> To cite this R package in publications, run the command: `citation("toxassay")`.
+#> 
+#> Attaching package: 'toxassay'
+#> The following object is masked from 'package:stats':
+#> 
+#>     filter
+set.seed(100)
+sim_data <- simulate_tgxdata(n_de = 10, n_ee = 100, n_com = c(5,5), d=1)
+com_group <- list(non_toxic = paste0("Compound", 1:5), toxic = paste0("Compound", 6:10))
+tgx_degs(com_group, 
+         ge_matrix = sim_data$expression, 
+         metadata = sim_data$metadata, 
+         gr_diff = TRUE, log10p = TRUE)
+#> • Total number of unique genes = 110 (110 probes)
+#> • Number of significant genes = 10 (at α = 0.05)
+#> # A tibble: 110 × 8
+#>   probe_id gene_symbol non_toxic toxic `non_toxic-toxic`  p_value log10p
+#> * <chr>    <chr>           <dbl> <dbl>             <dbl>    <dbl>  <dbl>
+#> 1 DE5      DE5            -0.507 0.541            -1.05  2.21e-35   34.7
+#> 2 DE1      DE1            -0.423 0.673            -1.10  2.24e-34   33.6
+#> 3 DE3      DE3            -0.509 0.415            -0.924 5.92e-30   29.2
+#> 4 DE6      DE6            -0.494 0.557            -1.05  7.80e-30   29.1
+#> 5 DE4      DE4            -0.800 0.293            -1.09  2.18e-29   28.7
+#> # ℹ 105 more rows
+#> # ℹ 1 more variable: sig_type <chr>
+```
 
 ## Getting help
 

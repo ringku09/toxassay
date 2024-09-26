@@ -45,16 +45,16 @@ the development version of toxassay from GitHub.
 
 ```{r, eval = FALSE}
 # install.packages("pak")
-pak::pak("ringku09/toxassay")
+pak::pak("FanLiuLab/toxassay")
 ```
 
 ## Usages
 
-### Download and preprocessing analysis ready data
+### Download and preprocess analysis-ready data
 
 In the current version of **ToxAssay**, users can download and process raw compound perturbation data from the [Open TG-GATEs](https://dbarchive.biosciencedbc.jp/en/open-tggates/download.html) and [DrugMatrix](https://ntp.niehs.nih.gov/data/drugmatrix) databases, as well as curated relational data from the [CTD](https://ctdbase.org).
 
-Available compounds in databases.
+Available compounds in databases:
 ```{r, eval = FALSE}
 # Compounds in Open TG-GATEs database
 # Data available for compounds in Rat in-vivo liver Single data
@@ -65,6 +65,7 @@ tggates_compounds(species = "Rat", data_type = "in_vivo", tissue = "Liver", dose
 drugmatrix_compounds(tissue = "Liver")
 ```
 
+Automatically download and process data by compound name from the databases: 
 ```{r, eval=FALSE}
 # Get data from Open TG-GATEs
 get_tggates(compounds = c("2-nitrofluorene", "N-nitrosomorpholine"), species = "Rat", data_type = "in_vivo", tissue = "Liver", dose_type = "Single")
@@ -76,6 +77,20 @@ get_drugmatrix(compounds = c("Ethanol", "Estriol"), tissue = "Liver")
 get_ctd(compounds = c("Ethanol", "Estriol"), gene_parm = "cgixns", disease_parm = "diseases")
 ```
 <img src="man/figures/downloading.png" width="890"/>
+
+### Differential expression analysis
+```{r}
+library(toxassay)
+set.seed(100)
+sim_data <- simulate_tgxdata(n_de = 10, n_ee = 100, n_com = c(5,5), d=1)
+com_group <- list(non_toxic = paste0("Compound", 1:5), toxic = paste0("Compound", 6:10))
+tgx_degs(com_group, 
+         ge_matrix = sim_data$expression, 
+         metadata = sim_data$metadata, 
+         gr_diff = TRUE, log10p = TRUE)
+```
+
+
 
 ## Getting help
 
