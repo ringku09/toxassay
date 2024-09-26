@@ -72,20 +72,20 @@ simulate_ge <- function(n_com,
   exp_var <- icc + r2
   v_err <- 1 - exp_var
   if (length(n_com) > 2) {
-    cli_abort(c("Simulation only support two groups of compound.",
+    cli::cli_abort(c("Simulation only support two groups of compound.",
                 "x" = "You have supplied {style_bold(col_red(n_com))} compound groups.",
                 "i" = "Please provide number of compound groups of length 2."),
               wrap = TRUE, call = error_call)
   }
   if(icc >= 1){
-    cli_abort(c("The data must be standerdize.",
+    cli::cli_abort(c("The data must be standerdize.",
                 "x" = "You have supplied overall ICC of {style_bold(col_red(icc))}.",
                 "i" = "Please provide ovarall ICC in between 0 and 1."),
               wrap = TRUE, call = error_call)
   }
 
   if(v_err < 0){
-    cli_abort(c("The data must be standerdize.",
+    cli::cli_abort(c("The data must be standerdize.",
                 "x" = "You have supplied {.arg icc} and {.arg d} which result in sum of \\
                 explained (icc) and unexplained (r2) variation is {style_bold(col_red(round(exp_var,2)))}.",
                 "i" = "Please provide reduce values of {.arg icc} and {.arg d}."),
