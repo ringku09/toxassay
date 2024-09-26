@@ -70,22 +70,22 @@ get_transaction <- function(compound_gene,
     }
   }
   if (is.null(diseases)) {
-    diseases <- compound_disease %>% select(disease_id) %>% pull()
+    diseases <- compound_disease %>% select(disease_id) %>% dplyr::pull()
   }
   if (is.null(genes)) {
-    genes <- compound_gene %>% select(gene_symbol) %>% pull()
+    genes <- compound_gene %>% select(gene_symbol) %>% dplyr::pull()
   }
   gene_df <- compound_gene %>%
-    filter(chemical_name %in% compounds) %>%
-    filter(gene_symbol %in% toupper(genes)) %>%
-    filter(organism_id %in% c(9606, 10116)) %>%
-    select(c(chemical_name, gene_symbol)) %>%
-    distinct()
+    dplyr::filter(chemical_name %in% compounds) %>%
+    dplyr::filter(gene_symbol %in% toupper(genes)) %>%
+    dplyr::filter(organism_id %in% c(9606, 10116)) %>%
+    dplyr::select(c(chemical_name, gene_symbol)) %>%
+    dplyr::distinct()
   dise_df <- compound_disease %>%
-    filter(chemical_name %in% compounds) %>%
-    filter(disease_id %in% diseases) %>%
-    select(c(chemical_name, disease_id)) %>%
-    distinct()
+    dplyr::filter(chemical_name %in% compounds) %>%
+    dplyr::filter(disease_id %in% diseases) %>%
+    dplyr::select(c(chemical_name, disease_id)) %>%
+    dplyr::distinct()
   gene_mat <- reshape2::dcast(gene_df, chemical_name ~ gene_symbol,
                               fun.aggregate = length, value.var = "gene_symbol")
   gene_mat[is.na(gene_mat)] <- 0
@@ -97,14 +97,14 @@ get_transaction <- function(compound_gene,
 
   marg_df <- gene_mat %>%
     dplyr::inner_join(dise_mat, by = "chemical_name") %>%
-    distinct(chemical_name, .keep_all = TRUE)
+    dplyr::distinct(chemical_name, .keep_all = TRUE)
   marg_df <- marg_df %>%
     dplyr::mutate(dplyr::across(-chemical_name, ~ ifelse(!is.na(.) & . > 0, 1, 0)))
   non_zero_cols <- colnames(marg_df)[colSums(marg_df[-1], na.rm = TRUE) > 1]
   non_zero_rows <- rowSums(marg_df[-1], na.rm = TRUE) > 1
   marg_df <- marg_df %>%
-    filter(non_zero_rows) %>%
-    select(chemical_name, all_of(non_zero_cols))
+    dplyr::filter(non_zero_rows) %>%
+    dplyr::select(chemical_name, all_of(non_zero_cols))
   marg_mat <- df2matrix(dplyr::select(marg_df,-chemical_name), dplyr::pull(marg_df, chemical_name))
 
   genes_idx <- which(genes %in% colnames(marg_mat))
@@ -158,16 +158,16 @@ get_aops <- function(transaction,
                      min_confidence = 0.5,
                      ci_metric = "lift") {
   if (!all(requireNamespace("arules", quietly = TRUE))) {
-    cli_abort(c("Packages `arules` required for AOP!",
+    cli::cli_abort(c("Packages `arules` required for AOP!",
                 "i" = "Please install `arules`."),
               call = error_call)
   }
   transaction[transaction == 0] <- NA
   transaction <- as.data.frame(transaction) %>%
-    mutate(across(everything(), factor))
-  bin_trans <- as(transaction, "transactions")
-  gene_items <- intersect(colnames(bin_trans), paste(genes, 1, sep='='))
-  dise_items <- intersect(colnames(bin_trans), paste(diseases, 1, sep='='))
+    dplyr::mutate(dplyr::across(tidyselect::everything(), factor))
+  bin_trans <- methods::as(transaction, "transactions")
+  gene_items <- arules::intersect(colnames(bin_trans), paste(genes, 1, sep='='))
+  dise_items <- arules::intersect(colnames(bin_trans), paste(diseases, 1, sep='='))
   rules <- suppressWarnings(arules::apriori(bin_trans,
                            parameter = list(support = min_support,
                                             confidence = min_confidence,
@@ -176,18 +176,18 @@ get_aops <- function(transaction,
   rules_ap <- arules::subset(rules, subset = lhs %in% gene_items &
                                lift > 1 &
                                rhs %in% dise_items)
-  ci <- confint(rules_ap, ci_metric,  smoothCounts = 0.5, transactions = bin_trans)
-  quality(rules_ap) <- cbind(
-    quality(rules_ap),
-    oddsRatio = interestMeasure(rules_ap, "oddsRatio", bin_trans),
+  ci <- stats::confint(rules_ap, ci_metric,  smoothCounts = 0.5, transactions = bin_trans)
+  arules::quality(rules_ap) <- cbind(
+    arules::quality(rules_ap),
+    oddsRatio = arules::interestMeasure(rules_ap, "oddsRatio", bin_trans),
     CI = ci)
-  df_ap <- as(rules_ap, "data.frame")
+  df_ap <- methods::as(rules_ap, "data.frame")
   df_ap$rules <- as.character(df_ap$rules)
   temp <- sapply(strsplit(df_ap$rules, split="[{}]"), unlist)
   df_ap <- df_ap %>%
-    mutate(lhs = gsub("=1", "",temp[2,]), rhs = gsub("=1", "",temp[4,]), .before = support) %>%
-    select(-rules) %>%
-    tibble()
+    dplyr::mutate(lhs = gsub("=1", "",temp[2,]), rhs = gsub("=1", "",temp[4,]), .before = support) %>%
+    dplyr::select(-rules) %>%
+    tibble::tibble()
   return(df_ap)
 }
 
@@ -225,20 +225,22 @@ disease_similarity <- function(disease_data,
                                genes = NULL,
                                condition = TRUE) {
   if (is.null(genes)) {
-    genes <- unique(disease_data %>% select({{gene_column}}) %>% pull())
+    genes <- unique(disease_data %>%
+                      dplyr::select({{gene_column}}) %>%
+                      dplyr::pull())
   }
   # gene_names <- disease_data %>%
   #   dplyr::select({{gene_column}}) %>%
   #   pull() %>%
   #   toupper()
 
-  df_unique <- as_tibble(disease_data) %>%
+  df_unique <- tibble::as_tibble(disease_data) %>%
     dplyr::filter(eval(parse(text = condition))) %>%
     dplyr::filter({{ gene_column }} %in%  toupper(genes)) %>%
-    distinct({{gene_column}}, {{target_column}}) %>%
-    mutate(Value = 1)
+    dplyr::distinct({{gene_column}}, {{target_column}}) %>%
+    dplyr::mutate(Value = 1)
   df_wide <- df_unique %>%
-    pivot_wider(names_from = {{gene_column}}, values_from = Value, values_fill = list(Value = 0))
+    tidyr::pivot_wider(names_from = {{gene_column}}, values_from = Value, values_fill = list(Value = 0))
   disease_names <- dplyr::pull(df_wide[, 1])
   binary_matrix <- as.matrix(df_wide[, -1])
   rownames(binary_matrix) <- disease_names
@@ -294,16 +296,18 @@ gene_similarity <- function(gene_data,
                             diseases = NULL,
                             condition = TRUE) {
   if (is.null(diseases)) {
-    diseases <- unique(gene_data %>% select({{disease_column}}) %>% pull())
+    diseases <- unique(gene_data %>%
+                         dplyr::select({{disease_column}}) %>%
+                         dplyr::pull())
   }
 
-  df_unique <- as_tibble(gene_data) %>%
+  df_unique <- tibble::as_tibble(gene_data) %>%
     dplyr::filter(eval(parse(text = condition))) %>%
     dplyr::filter({{ disease_column }} %in% diseases) %>%
-    distinct({{disease_column}}, {{target_column}}) %>%
-    mutate(Value = 1)
+    dplyr::distinct({{disease_column}}, {{target_column}}) %>%
+    dplyr::mutate(Value = 1)
   df_wide <- df_unique %>%
-    pivot_wider(names_from = {{disease_column}}, values_from = Value, values_fill = list(Value = 0))
+    tidyr::pivot_wider(names_from = {{disease_column}}, values_from = Value, values_fill = list(Value = 0))
   gene_names <- dplyr::pull(df_wide[, 1])
   binary_matrix <- as.matrix(df_wide[, -1])
   rownames(binary_matrix) <- gene_names
@@ -383,9 +387,9 @@ aop_network <- function(aop_df, dise_voc, weight_column) {
   vert_df[1:length(idx),] <- vert_df[idx,]
 
   edge_df <- dese_net %>%
-    select(Disease, lhs, {{weight_column}} ) %>%
-    rename(c("from" = Disease,"to" = lhs, "weight" = {{weight_column}} )) %>%
-    mutate(to = block_fst(to))
+    dplyr::select(Disease, lhs, {{weight_column}} ) %>%
+    dplyr::rename(c("from" = Disease,"to" = lhs, "weight" = {{weight_column}} )) %>%
+    dplyr::mutate(to = block_fst(to))
   aop_data <- list(edges = edge_df, vertices = vert_df)
   return(aop_data)
 }
