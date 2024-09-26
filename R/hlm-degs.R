@@ -22,25 +22,22 @@
 #' hlm(Y = sim_data$expression, A = summary_mat$A, B =summary_mat$B, a = sim_str[[1]], p = sum(sim_str[[4]]), n = sum(sim_str[[5]]))
 hlm <- function(Y, A, B, a, p, n, error_call = caller_env()) {
   if (!(inherits(Y, "matrix"))) {
-    cli_abort(c("The {.arg Y} must be a matrix.",
-             "i" = "Please make {.arg Y} as matrix."))
+    cli::cli_abort(c("The {.arg Y} must be a matrix.",
+             "i" = "Please make {.arg Y} as matrix."), call = error_call)
   }
   if (! ncol(Y) == n) {
-    cli_abort(c("The matrix {.arg Y} must have {style_bold(col_red(backtick(n)))} columns for given {.arg expr_str}.",
+    cli::cli_abort(c("The matrix {.arg Y} must have {style_bold(col_red(backtick(n)))} columns for given {.arg expr_str}.",
                 "x" = "The number of columns in {.arg Y} ({ncol(Y)}) is not equal to the \\
                 total sample size of the experiment ({n}).",
                 "i" = "Please provide matrix {.arg Y} with number of columns {style_bold(col_red(backtick(n)))} \\
-                or provide {.arg expr_str} appropriately."))
+                or provide {.arg expr_str} appropriately."), call = error_call)
   }
   f_pi <- get_pi(Y, A)
-  BB <- as(B, 'dgCMatrix')
+  BB <- methods::as(B, 'dgCMatrix')
   f_psi <- get_psi(Y, BB)
   eta <- (n - p)/(a - 1)
   F_h <- eta* f_pi / f_psi
   pval <- stats::pf(F_h, a - 1, n - p, lower.tail = FALSE)
-  # if (p_adjust) {
-  #   pval <- p.adjust(pval, method ="bonferroni", n = length(pval))
-  # }
   names(pval) <- rownames(Y)
   return(pval)
 }
@@ -142,8 +139,8 @@ tgx_degs <- function(...,
                       log10p = FALSE,
                       multicore = FALSE,
                       store = FALSE,
-                      output_dir = missing_arg(),
-                      error_call = caller_env()) {
+                      output_dir = rlang::missing_arg(),
+                      error_call = rlang::caller_env()) {
   comps_group <- test_group(...)
   test_data(ge_matrix, metadata)
   output_dir <- destination(output_dir)
@@ -190,9 +187,9 @@ tgx_degs <- function(...,
       dplyr::mutate(gene_symbol = probe_id, .after = 1)
   }
   hlm_df <- hlm_df %>%
-    distinct(gene_symbol, .keep_all= TRUE) %>%
+    dplyr::distinct(gene_symbol, .keep_all= TRUE) %>%
     #distinct(probe_id, .keep_all= TRUE) %>% # calculate average of rep probes
-    arrange(p_value)
+    dplyr::arrange(p_value)
   sig_probes <- hlm_df$probe_id[hlm_df$sig_type == "DE"]
   expr_loodata <- ge_matrix[sig_probes, ]
   loo_probes <- vector(mode = "list", length = length(compounds))
@@ -230,9 +227,9 @@ tgx_degs <- function(...,
   unique_genes <- nrow(sig_tab)
   fil1 <- n_probe - full_n
   fil2 <- full_n - loo_n
-    cli_ul(c(
-      bg_magenta("Total number of unique genes = {unique_genes} ({n_probe} probes)"),
-      bg_red("Number of significant genes = {loo_n} (at {'\u03B1'}  = {p_cutoff})")
-    ))
+    cli::cli_ul(c(
+      cli::bg_magenta("Total number of unique genes = {unique_genes} ({n_probe} probes)"),
+      cli::bg_red("Number of significant genes = {loo_n} (at {'\u03B1'}  = {p_cutoff})")
+    ), call = error_call)
     return(structure(sig_tab, class = c("ToxAssay", "tbl_df", "tbl", "data.frame")))
 }
