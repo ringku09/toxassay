@@ -97,20 +97,20 @@ test_input <- function(input, inputs, auto_input = FALSE, error_call = caller_en
 #' }
 #'
 #' @export
-test_data <- function(expr_data, attr_data) {
+test_data <- function(expr_data, attr_data, error_call = rlang::caller_env()) {
   if (!inherits(expr_data, c("matrix", "array"))) {
     cli_abort(c("The expression data must be a matrix.",
                 "x" = "The class {style_bold(col_cyan(backtick(class(expr_data))))} of \\
                 expression data {?is/are} not supported.",
                 "i" = "Please make expression data as matrix \\
-             (`probes` in rows and `barcode` in columns)."))
+             (`probes` in rows and `barcode` in columns)."), call = error_call)
 
   }
   if (!rlang::inherits_any(attr_data, c("tbl_df", "tbl", "data.frame"))) {
     cli::cli_abort(c("The attribute data must be a data frame.",
                 "x" = "The class {style_bold(col_cyan(backtick(class(attr_data))))} of \\
                 attribute data {?is/are} not supported.",
-                "i" = "Please make attribute data as data frame."))
+                "i" = "Please make attribute data as data frame."), call = error_call)
 
   }
   test_column(c("barcode", "compound_name", "dose_level", "time_level"), attr_data)
@@ -120,7 +120,7 @@ test_data <- function(expr_data, attr_data) {
                 "x" = "{style_bold(col_cyan(backtick(colnames(expr_data)[match_bar])))} column{?s} \\
                 {?is/are} not described in the metadata.",
                 "i" = "Please remove unspecified columns from the expression data. After that you \\
-               can update your data by calling the function `update_data()`"))
+               can update your data by calling the function `update_data()`"), call = error_call)
   }
 }
 
@@ -175,7 +175,7 @@ test_group <- function(..., error_call = rlang::caller_env()) {
   }
   # wrong_arg <- which(!arg_checker)
   wrong_arg <- sapply(substitute(list(...))[-1], as.character)[!arg_checker]
-  if (!all(arg_checker)) {
+  if (!all(arg_checker )) {
     arg_nm <- paste("argument_name", LETTERS[1:length(wrong_arg)])
     cli::cli_abort(c("Invalid use of the argument in the function.",
                 "x" = "You have supplied object{?s} {style_bold(col_red(wrong_arg))}  without assigning
@@ -210,7 +210,7 @@ test_group <- function(..., error_call = rlang::caller_env()) {
 #' test_element("orange", valid_elements) # Throws an error
 #' }
 #' @export
-test_element <- function(input, elements, error_call = caller_env()) {
+test_element <- function(input, elements, error_call = rlang::caller_env()) {
   if (length(elements) > 9L) {
     new_inputs <- c(elements[1:9], "...", elements[length(elements)])
   } else {
@@ -245,7 +245,7 @@ test_element <- function(input, elements, error_call = caller_env()) {
                 {backtick(deparse(substitute(elements)))}.",
                 "x" = "{style_bold(col_red(backtick(new_element)))} element{?s} \\
                 {?is\are} not available in {backtick(deparse(substitute(elements)))}.",
-                "i" = "Please select element from {style_italic(col_blue(backtick(new_inputs)))}."))
+                "i" = "Please select element from {style_italic(col_blue(backtick(new_inputs)))}."), call = error_call)
   }
 }
 
@@ -269,10 +269,10 @@ test_element <- function(input, elements, error_call = caller_env()) {
 #' test_column("d", df) # Throws an error: "d" does not exist in `df`
 #' }
 #' @export
-test_column <- function(column, df) {
+test_column <- function(column, df, error_call = rlang::caller_env()) {
   if (! (is.data.frame(df) | tibble::is_tibble(df) || is.list(df))) {
     cli::cli_abort(c("{.arg df} must be a `data.frame` or `tibble` or `list`.",
-                "i" = "Please provide the correct {.arg df}."))
+                "i" = "Please provide the correct {.arg df}."), call = error_call)
   }
   columns <- names(df)
   if (length(columns) > 9L) {
@@ -283,7 +283,7 @@ test_column <- function(column, df) {
   if (length(column) == 0) {
     cli::cli_abort(c("Input {gsub('_', ' ', deparse(substitute(column)))} must have at least 1 location.",
                 "i" = "Please select column from {style_italic(col_blue(backtick(new_columns)))} \\
-                ,or provide the correct {backtick(deparse(substitute(df)))}."))
+                ,or provide the correct {backtick(deparse(substitute(df)))}."), call = error_call)
   }
   # if (length(column) > 1) {
   #   cli_abort(c(
@@ -305,7 +305,7 @@ test_column <- function(column, df) {
                 "x" = "{style_bold(col_red(backtick(new_column)))} column{?s} \\
                 {?is\are} not available in {backtick(deparse(substitute(df)))}.",
                 "i" = "Please select column from {style_italic(col_blue(backtick(new_columns)))} \\
-                ,or provide the correct {backtick(deparse(substitute(df)))}."))
+                ,or provide the correct {backtick(deparse(substitute(df)))}."), call = error_call)
   }
 }
 
@@ -330,18 +330,18 @@ test_column <- function(column, df) {
 #' test_datastr(invalid_list)
 #' }
 #' @export
-test_datastr <- function(expr_str) {
+test_datastr <- function(expr_str, error_call = rlang::caller_env()) {
   if (!is.list(expr_str) & !inherits(expr_str, "ToxAssay")) {
     cli::cli_abort(c("{.var expr_str} must be object of class `ToxAssay` or `list`.",
                 "x" = "The class {style_bold(col_cyan(backtick(class(expr_str))))} of \\
                 {.var expr_str} is not supported.",
                 "i" = "Please provide {.var expr_str} as a list of size 5
-                (for `group`, `compound`, `dose`, `time` and `replication`)."))
+                (for `group`, `compound`, `dose`, `time` and `replication`)."), call = error_call)
   } else if (length(expr_str)  !=  5) {
     cli::cli_abort(c("The length of {.var expr_str} must be 5.",
                 "i" = "You have supplied a list {.var expr_str} of size {length(expr_str)}, please
                 make sure {.var expr_str} has a length of 5
-                (for `group`, `compound`, `dose`, `time` and `replication`)."))
+                (for `group`, `compound`, `dose`, `time` and `replication`)."), call = error_call)
   }
 }
 
@@ -478,7 +478,7 @@ is_compound <- function(compounds,
 #' is_metadata(metadata)
 #'
 #' @export
-is_metadata <- function(metadata) {
+is_metadata <- function(metadata, error_call = rlang::caller_env()) {
   test_column(c("compound_name", "dose_level", "time_level", "organ_id", "database", "arr_design","fc"), metadata)
   database <- unique(metadata$database)
   test_input(database, c("tggates", "drugmatrix"))
