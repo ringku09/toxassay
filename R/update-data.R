@@ -51,7 +51,7 @@ expand_data <- function(compounds,
   ext_comp <- unique(metadata$compound_name)
   ext_idx <- compounds %in% ext_comp
   if (any(ext_idx)) {
-      cli_warn(c(
+      cli::cli_warn(c(
         "Some of the compound already exist in the data",
         "i" = "{style_bold(col_red(compounds[ext_idx]))} {?is/are} already in the data,
       we ignore {?it/them} to add again."
@@ -227,8 +227,8 @@ update_data <- function(compounds,
     metadata <- metadata
   } else {
     # database  <- unique(metadata$database)
-    if (!is_empty(ext_comps)) {
-      cli_alert_warning(c("The input data for the compound{?s}
+    if (!rlang::is_empty(ext_comps)) {
+      cli::cli_alert_warning(c("The input data for the compound{?s}
                         {style_bold(col_red(backtick(ext_comps)))}
                         has been removed because {?this/these}
                         compound{?s} {?is/are} not listed in the query list."),wrap = TRUE)
@@ -240,9 +240,9 @@ update_data <- function(compounds,
       )
       ge_matrix <- ext_data$expression
       metadata <- ext_data$metadata %>%
-        dplyr::mutate(mutate(across(where(is.factor), droplevels)))
+        dplyr::mutate(dplyr::across(where(is.factor), droplevels))
     }
-    if (!is_empty(mis_comps)) {
+    if (!rlang::is_empty(mis_comps)) {
       exp_data <- expand_data(
         compounds = mis_comps,
         ge_matrix = ge_matrix,
@@ -267,7 +267,7 @@ update_data <- function(compounds,
     if (any(!true_probes)) {
       false_probes <- probes[!true_probes]
       n_false <- length(false_probes)
-      cli_alert_warning(c("Given {.emph {n_false}} probe{?s} ",
+      cli::cli_alert_warning(c("Given {.emph {n_false}} probe{?s} ",
                           "{style_bold(col_red(backtick(false_probes)))} ",
                           "{?is/are} not found in the gene expression data."),
                         wrap = TRUE)
