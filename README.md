@@ -21,11 +21,14 @@ encompassing:
 
 - Automated acquisition, preprocessing, and annotation of data by
   compound name for efficient management.
-- Identification of molecular markers for targeted toxicity, including
+- Identification of molecular markers for targeted toxicity, such as
   differentially expressed genes (DEGs),adverse outcome pathways (AOPs),
-  functional pathways, and Protein-Protein Interaction (PPI) networks.
+  functional pathways, and Protein-Protein Interaction (PPI) networks,
+  etc.
 - Development of optimized machine-learning classifiers for predicting
   the targeted toxicity in test samples of compounds.
+
+<img src="man/figures/workflow.png" width="890"/>
 
 ## Installation
 

@@ -27,8 +27,10 @@ options(tibble.print_min = 5, tibble.print_max = 5)
 ToxAssay is an R-based software package designed for the comprehensive evaluation of drug-induced toxicity utilizing complex toxicogenomics databases. The package offers a comprehensive suite of functions, encompassing: 
 
 * Automated acquisition, preprocessing, and annotation of data by compound name for efficient management.
-* Identification of molecular markers for targeted toxicity, including differentially expressed genes (DEGs),adverse outcome pathways (AOPs), functional pathways, and Protein-Protein Interaction (PPI) networks.
+* Identification of molecular markers for targeted toxicity, such as differentially expressed genes (DEGs),adverse outcome pathways (AOPs), functional pathways, and Protein-Protein Interaction (PPI) networks,  etc.
 * Development of optimized machine-learning classifiers for predicting the targeted toxicity in test samples of compounds.
+
+<img src="man/figures/workflow.png" width="890"/>
 
 ## Installation
 
