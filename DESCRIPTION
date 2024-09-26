@@ -26,9 +26,7 @@ Imports:
     arules,
     Biobase,
     cli,
-    doParallel,
     dplyr,
-    foreach,
     glue,
     httr,
     igraph,
@@ -46,3 +44,6 @@ Imports:
     tibble,
     tidyr,
     tidyselect
+Suggests: 
+    doParallel,
+    foreach
