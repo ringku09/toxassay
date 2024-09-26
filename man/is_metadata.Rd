@@ -4,7 +4,7 @@
 \alias{is_metadata}
 \title{Validate Metadata for Toxicogenomics Datasets}
 \usage{
-is_metadata(metadata)
+is_metadata(metadata, error_call = rlang::caller_env())
 }
 \arguments{
 \item{metadata}{A data frame containing metadata for the toxicogenomics dataset.

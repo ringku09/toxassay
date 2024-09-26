@@ -4,7 +4,13 @@
 \alias{cel2exprs}
 \title{Convert Affymetrix CEL Files to Gene Expression Matrix}
 \usage{
-cel2exprs(cel_files, organism = "rat", method = "rma", ...)
+cel2exprs(
+  cel_files,
+  organism = "rat",
+  method = "rma",
+  error_call = rlang::caller_env(),
+  ...
+)
 }
 \arguments{
 \item{cel_files}{A vector containing the full paths of CEL files.}

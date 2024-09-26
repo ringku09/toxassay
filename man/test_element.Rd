@@ -4,7 +4,7 @@
 \alias{test_element}
 \title{Validate Input Against a List of Elements}
 \usage{
-test_element(input, elements, error_call = caller_env())
+test_element(input, elements, error_call = rlang::caller_env())
 }
 \arguments{
 \item{input}{A vector representing the input to be validated against the \code{elements}.}

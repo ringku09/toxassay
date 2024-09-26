@@ -6,12 +6,12 @@
 \usage{
 is_compound(
   compounds,
-  database = missing_arg(),
-  species = missing_arg(),
-  data_type = missing_arg(),
-  tissue = missing_arg(),
-  dose_type = missing_arg(),
-  error_call = caller_env()
+  database = rlang::missing_arg(),
+  species = rlang::missing_arg(),
+  data_type = rlang::missing_arg(),
+  tissue = rlang::missing_arg(),
+  dose_type = rlang::missing_arg(),
+  error_call = rlang::caller_env()
 )
 }
 \arguments{

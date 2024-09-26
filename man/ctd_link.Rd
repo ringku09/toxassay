@@ -8,7 +8,8 @@ ctd_link(
   compounds,
   association = c("cgixns", "genes_curated", "genes_inferred", "diseases",
     "diseases_curated", "diseases_inferred"),
-  action_type = "ANY"
+  action_type = "ANY",
+  error_call = rlang::error_call()
 )
 }
 \arguments{

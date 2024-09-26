@@ -4,7 +4,7 @@
 \alias{test_datastr}
 \title{Validate Data Structure for ToxAssay}
 \usage{
-test_datastr(expr_str)
+test_datastr(expr_str, error_call = rlang::caller_env())
 }
 \arguments{
 \item{expr_str}{An object to be validated. It should be either an object of class \code{ToxAssay} or a list.}

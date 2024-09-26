@@ -1,18 +1,77 @@
+#-------------------------------  Base packages ---------------------
+#' @importFrom stats na.omit
+#' @export
+stats::na.omit
+
+#' @importFrom stats confint
+#' @export
+stats::confint
+
+#' @importFrom stats pf
+#' @export
+stats::pf
+
+#' @importFrom methods as
+#' @export
+methods::as
+
+#' @importFrom scales rescale
+#' @export
+scales::rescale
+
+#' @importFrom utils unzip
+#' @export
+utils::unzip
+
+#' @importFrom utils unzip
+#' @export
+utils::unzip
+
+#' @importFrom utils read.table
+#' @export
+utils::read.table
+
+#' @importFrom utils txtProgressBar
+#' @export
+utils::txtProgressBar
+
+#' @importFrom utils setTxtProgressBar
+#' @export
+utils::setTxtProgressBar
+
+#' @importFrom utils download.file
+#' @export
+utils::download.file
+
+#' @importFrom utils unzip
+#' @export
+utils::unzip
+
+#' @importFrom utils packageVersion
+#' @export
+utils::packageVersion
+
+#' @importFrom tools file_ext
+#' @export
+tools::file_ext
+
+#' @importFrom stats median
+#' @export
+stats::median
+
+#-------------------------------  Biological database ---------------------
+  #' @importFrom AnnotationDbi select
+  #' @export
+  AnnotationDbi::select
+
+  #' @importFrom rat2302.db rat2302.db
+  #' @export
+  rat2302.db::rat2302.db
+
+
 #' @importFrom magrittr %>%
 #' @export
  magrittr::`%>%`
-
- #' @importFrom utils download.file
- #' @export
- utils::download.file
-
- #' @importFrom utils unzip
- #' @export
- utils::unzip
-
- #' @importFrom utils packageVersion
- #' @export
- utils::packageVersion
 
  #' @importFrom affy ReadAffy
  #' @export
@@ -29,10 +88,6 @@
  #' @importFrom Biobase exprs
  #' @export
  Biobase::exprs
-
- #' @importFrom stats median
- #' @export
- stats::median
 
  #----------------------------- import for `dplyr`--------------------
  #' @importFrom dplyr across
@@ -79,6 +134,22 @@
  #' @export
  dplyr::rename_with
 
+ #' @importFrom dplyr left_join
+ #' @export
+ dplyr::left_join
+
+ #' @importFrom  dplyr bind_rows
+ #' @export
+ dplyr::bind_rows
+
+
+
+ #------------------------------------- Tidyselect ---------------
+
+ #' @importFrom tidyselect everything
+ #' @export
+ tidyselect::everything
+
  #' @importFrom dplyr mutate_at
  #' @export
  dplyr::mutate_at
@@ -91,9 +162,14 @@
  #' @export
  readr::write_csv
 
+ #------------------------------------ parralel computing --------------------
  #' @importFrom parallel detectCores
  #' @export
  parallel::detectCores
+
+ #' @importFrom parallel splitIndices
+ #' @export
+ parallel::splitIndices
 
  #' @importFrom parallel makeCluster
  #' @export
@@ -126,6 +202,20 @@
  #' @importFrom foreach registerDoSEQ
  #' @export
  foreach::registerDoSEQ
+
+ #' @importFrom foreach foreach
+ #' @export
+ foreach::foreach
+
+ #' @importFrom foreach `%dopar%`
+ #' @export
+ foreach::`%dopar%`
+
+ #' @importFrom foreach `%do%`
+ #' @export
+ foreach::`%do%`
+
+
 
  #----------------------------- import for `rlang`--------------------
  #' @importFrom rlang is_empty
@@ -160,6 +250,9 @@
  #' @export
  rlang::missing_arg
 
+ #' @importFrom rlang parse_expr
+ #' @export
+ rlang::parse_expr
  #----------------------------- import for `cli`--------------------
  #' @importFrom cli cli_alert_warning
  #' @export
@@ -232,19 +325,61 @@
  #' @export
  tidyr::pivot_wider
 
+ #----------------------------- import for `purrr`--------------------
+
+ #' @importFrom  purrr map
+ #' @export
+ purrr::map
+
+ #' @importFrom  purrr imap
+ #' @export
+ purrr::imap
+
+ #----------------------------- import for `readr`--------------------
+
+ #' @importFrom  readr write_tsv
+ #' @export
+ readr::write_tsv
+
+ #' @importFrom  readr write_csv
+ #' @export
+ readr::write_csv
 
  #----------------------------- import for `tibble`--------------------
  #' @importFrom tibble tibble
  #' @export
  tibble::tibble
 
+ #' @importFrom tibble as_tibble
+ #' @export
+ tibble::as_tibble
+
+ #---------------------------------- httr -----------------------
+
+ #' @importFrom httr GET
+ #' @export
+ httr::GET
+
+ #' @importFrom httr write_disk
+ #' @export
+ httr::write_disk
+
+ #' @importFrom httr progress
+ #' @export
+ httr::progress
+
+ #' @importFrom  httr write_disk
+ #' @export
+ httr::write_disk
+
+
  #############################################
 
+#
+#  #' @import arules
+#  #' @export
 
- #' @import arules
- #' @export
-
- #' @import STRINGdb
- #' @export
+#' @import STRINGdb
+#' @export
 
 

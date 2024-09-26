@@ -37,7 +37,9 @@ Workflow of ToxAssay in five main steps:
 
 ```{r, eval = FALSE}
 # Install released version from CRAN
-install.packages("toxassay")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("toxassay")
 ```
 
 To get a bug fix or to use a feature from the development version, you can install 

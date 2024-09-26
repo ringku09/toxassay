@@ -4,7 +4,7 @@
 \alias{test_data}
 \title{Validate Expression and Attribute Data}
 \usage{
-test_data(expr_data, attr_data)
+test_data(expr_data, attr_data, error_call = rlang::caller_env())
 }
 \arguments{
 \item{expr_data}{A matrix or array containing expression data. The matrix should have \code{probes} as rows and \code{barcode} as columns.}

@@ -7,9 +7,9 @@
 start_parallel(multicore = TRUE, error_call = caller_env(), ...)
 }
 \arguments{
-\item{...}{Additional parameter}
+\item{multicore}{Parallel computation (default is \code{TRUE})}
 
-\item{.parallel}{Parallel computation (default is \code{TRUE})}
+\item{...}{Additional parameter}
 }
 \value{
 Class of parallel object

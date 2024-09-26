@@ -4,7 +4,7 @@
 \alias{test_group}
 \title{Validate and Group Compounds}
 \usage{
-test_group(..., error_call = caller_env())
+test_group(..., error_call = rlang::caller_env())
 }
 \arguments{
 \item{...}{Compound groups supplied as vectors, lists, or factors containing compound names or abbreviations.

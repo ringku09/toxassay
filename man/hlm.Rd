@@ -4,7 +4,7 @@
 \alias{hlm}
 \title{Hierarchical linear model}
 \usage{
-hlm(Y, A, B, a, p, n, error_call = caller_env())
+hlm(Y, A, B, a, p, n, error_call = rlang::caller_env())
 }
 \arguments{
 \item{Y}{Gene expression data matrix, probes in row and samples in column.}

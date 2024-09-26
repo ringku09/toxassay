@@ -4,7 +4,7 @@
 \alias{test_column}
 \title{Validate Column Presence in Data Frame or List}
 \usage{
-test_column(column, df)
+test_column(column, df, error_call = rlang::caller_env())
 }
 \arguments{
 \item{column}{A character vector representing the name(s) of the column(s) to be checked.}

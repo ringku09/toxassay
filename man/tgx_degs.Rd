@@ -14,8 +14,8 @@ tgx_degs(
   log10p = FALSE,
   multicore = FALSE,
   store = FALSE,
-  output_dir = missing_arg(),
-  error_call = caller_env()
+  output_dir = rlang::missing_arg(),
+  error_call = rlang::caller_env()
 )
 }
 \arguments{

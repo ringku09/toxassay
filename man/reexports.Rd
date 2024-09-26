@@ -3,29 +3,43 @@
 \docType{import}
 \name{reexports}
 \alias{reexports}
-\alias{\%>\%}
-\alias{download.file}
+\alias{na.omit}
+\alias{confint}
+\alias{pf}
+\alias{as}
+\alias{rescale}
 \alias{unzip}
+\alias{read.table}
+\alias{txtProgressBar}
+\alias{setTxtProgressBar}
+\alias{download.file}
 \alias{packageVersion}
+\alias{file_ext}
+\alias{median}
+\alias{select}
+\alias{rat2302.db}
+\alias{\%>\%}
 \alias{ReadAffy}
 \alias{mas5}
 \alias{rma}
 \alias{exprs}
-\alias{median}
 \alias{across}
 \alias{pull}
 \alias{distinct}
 \alias{ungroup}
 \alias{arrange}
 \alias{group_by}
-\alias{select}
 \alias{filter}
 \alias{rename}
 \alias{rename_with}
+\alias{left_join}
+\alias{bind_rows}
+\alias{everything}
 \alias{mutate_at}
 \alias{as_tibble}
 \alias{write_csv}
 \alias{detectCores}
+\alias{splitIndices}
 \alias{makeCluster}
 \alias{clusterExport}
 \alias{clusterCall}
@@ -34,6 +48,9 @@
 \alias{getDoParName}
 \alias{getDoParWorkers}
 \alias{registerDoSEQ}
+\alias{foreach}
+\alias{\%dopar\%}
+\alias{\%do\%}
 \alias{is_empty}
 \alias{.data}
 \alias{englue}
@@ -42,6 +59,7 @@
 \alias{inherits_any}
 \alias{is_missing}
 \alias{missing_arg}
+\alias{parse_expr}
 \alias{cli_alert_warning}
 \alias{cli_abort}
 \alias{style_bold}
@@ -58,7 +76,13 @@
 \alias{glue_collapse}
 \alias{nest}
 \alias{pivot_wider}
+\alias{map}
+\alias{imap}
+\alias{write_tsv}
 \alias{tibble}
+\alias{GET}
+\alias{write_disk}
+\alias{progress}
 \title{Objects exported from other packages}
 \keyword{internal}
 \description{
@@ -68,32 +92,48 @@ below to see their documentation.
 \describe{
   \item{affy}{\code{\link[affy]{mas5}}, \code{\link[affy:read.affybatch]{ReadAffy}}, \code{\link[affy]{rma}}}
 
+  \item{AnnotationDbi}{\code{\link[AnnotationDbi:AnnotationDb-class]{select}}}
+
   \item{Biobase}{\code{\link[Biobase]{exprs}}}
 
   \item{cli}{\code{\link[cli:ansi-styles]{bg_magenta}}, \code{\link[cli:ansi-styles]{bg_red}}, \code{\link[cli:ansi-styles]{bg_red}}, \code{\link[cli]{cli_abort}}, \code{\link[cli:cli_alert]{cli_alert_info}}, \code{\link[cli:cli_alert]{cli_alert_success}}, \code{\link[cli:cli_alert]{cli_alert_warning}}, \code{\link[cli]{cli_ul}}, \code{\link[cli:ansi-styles]{col_br_red}}, \code{\link[cli:ansi-styles]{col_green}}, \code{\link[cli:ansi-styles]{col_red}}, \code{\link[cli:ansi-styles]{style_bold}}}
 
   \item{doParallel}{\code{\link[doParallel]{registerDoParallel}}}
 
-  \item{dplyr}{\code{\link[dplyr]{across}}, \code{\link[dplyr]{arrange}}, \code{\link[dplyr]{arrange}}, \code{\link[dplyr]{distinct}}, \code{\link[dplyr]{filter}}, \code{\link[dplyr]{group_by}}, \code{\link[dplyr:mutate_all]{mutate_at}}, \code{\link[dplyr]{pull}}, \code{\link[dplyr]{rename}}, \code{\link[dplyr:rename]{rename_with}}, \code{\link[dplyr]{select}}, \code{\link[dplyr:group_by]{ungroup}}}
+  \item{dplyr}{\code{\link[dplyr]{across}}, \code{\link[dplyr]{arrange}}, \code{\link[dplyr]{arrange}}, \code{\link[dplyr]{bind_rows}}, \code{\link[dplyr]{distinct}}, \code{\link[dplyr]{filter}}, \code{\link[dplyr]{group_by}}, \code{\link[dplyr:mutate-joins]{left_join}}, \code{\link[dplyr:mutate_all]{mutate_at}}, \code{\link[dplyr]{pull}}, \code{\link[dplyr]{rename}}, \code{\link[dplyr:rename]{rename_with}}, \code{\link[dplyr]{select}}, \code{\link[dplyr:group_by]{ungroup}}}
 
-  \item{foreach}{\code{\link[foreach:getDoParWorkers]{getDoParName}}, \code{\link[foreach]{getDoParWorkers}}, \code{\link[foreach]{registerDoSEQ}}}
+  \item{foreach}{\code{\link[foreach:foreach]{\%do\%}}, \code{\link[foreach:foreach]{\%dopar\%}}, \code{\link[foreach]{foreach}}, \code{\link[foreach:getDoParWorkers]{getDoParName}}, \code{\link[foreach]{getDoParWorkers}}, \code{\link[foreach]{registerDoSEQ}}}
 
   \item{glue}{\code{\link[glue:quoting]{backtick}}, \code{\link[glue]{glue}}, \code{\link[glue]{glue_collapse}}}
 
+  \item{httr}{\code{\link[httr]{GET}}, \code{\link[httr]{progress}}, \code{\link[httr]{write_disk}}, \code{\link[httr]{write_disk}}}
+
   \item{magrittr}{\code{\link[magrittr:pipe]{\%>\%}}}
 
-  \item{parallel}{\code{\link[parallel:clusterApply]{clusterCall}}, \code{\link[parallel:clusterApply]{clusterExport}}, \code{\link[parallel]{detectCores}}, \code{\link[parallel]{makeCluster}}, \code{\link[parallel:makeCluster]{stopCluster}}}
+  \item{methods}{\code{\link[methods]{as}}}
 
-  \item{readr}{\code{\link[readr:write_delim]{write_csv}}}
+  \item{parallel}{\code{\link[parallel:clusterApply]{clusterCall}}, \code{\link[parallel:clusterApply]{clusterExport}}, \code{\link[parallel]{detectCores}}, \code{\link[parallel]{makeCluster}}, \code{\link[parallel]{splitIndices}}, \code{\link[parallel:makeCluster]{stopCluster}}}
 
-  \item{rlang}{\code{\link[rlang:dot-data]{.data}}, \code{\link[rlang]{englue}}, \code{\link[rlang]{inherits_any}}, \code{\link[rlang:bare-type-predicates]{is_bare_list}}, \code{\link[rlang]{is_empty}}, \code{\link[rlang:missing_arg]{is_missing}}, \code{\link[rlang]{list2}}, \code{\link[rlang]{missing_arg}}}
+  \item{purrr}{\code{\link[purrr]{imap}}, \code{\link[purrr]{map}}}
 
-  \item{stats}{\code{\link[stats]{median}}}
+  \item{rat2302.db}{\code{\link[rat2302.db:rat2302BASE]{rat2302.db}}}
 
-  \item{tibble}{\code{\link[tibble]{as_tibble}}, \code{\link[tibble]{tibble}}}
+  \item{readr}{\code{\link[readr:write_delim]{write_csv}}, \code{\link[readr:write_delim]{write_csv}}, \code{\link[readr:write_delim]{write_tsv}}}
+
+  \item{rlang}{\code{\link[rlang:dot-data]{.data}}, \code{\link[rlang]{englue}}, \code{\link[rlang]{inherits_any}}, \code{\link[rlang:bare-type-predicates]{is_bare_list}}, \code{\link[rlang]{is_empty}}, \code{\link[rlang:missing_arg]{is_missing}}, \code{\link[rlang]{list2}}, \code{\link[rlang]{missing_arg}}, \code{\link[rlang]{parse_expr}}}
+
+  \item{scales}{\code{\link[scales]{rescale}}}
+
+  \item{stats}{\code{\link[stats]{confint}}, \code{\link[stats]{median}}, \code{\link[stats:na.fail]{na.omit}}, \code{\link[stats:Fdist]{pf}}}
+
+  \item{tibble}{\code{\link[tibble]{as_tibble}}, \code{\link[tibble]{as_tibble}}, \code{\link[tibble]{tibble}}}
 
   \item{tidyr}{\code{\link[tidyr]{nest}}, \code{\link[tidyr]{pivot_wider}}}
 
-  \item{utils}{\code{\link[utils]{download.file}}, \code{\link[utils:packageDescription]{packageVersion}}, \code{\link[utils]{unzip}}}
+  \item{tidyselect}{\code{\link[tidyselect]{everything}}}
+
+  \item{tools}{\code{\link[tools:fileutils]{file_ext}}}
+
+  \item{utils}{\code{\link[utils]{download.file}}, \code{\link[utils:packageDescription]{packageVersion}}, \code{\link[utils]{read.table}}, \code{\link[utils:txtProgressBar]{setTxtProgressBar}}, \code{\link[utils]{txtProgressBar}}, \code{\link[utils]{unzip}}, \code{\link[utils]{unzip}}, \code{\link[utils]{unzip}}}
 }}
 
