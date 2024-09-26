@@ -1,0 +1,42 @@
+Package: toxassay
+Title: An R Framework for Eassy Access, Process and analysis of Complex Toxicogenomics Data
+Version: 0.0.0.9000
+Authors@R: c(
+    person("Md. Masud Rana", "Ringku", , "ringku_740@yahoo.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-5468-6613")),
+    person("Fan", "Liu", role = "aut",
+           comment = c(ORCID = "0000-0001-9241-816"))
+    )
+Description: ToxAssay designed for the comprehensive evaluation of drug-induced toxicity 
+    utilizing complex toxicogenomics databases, including transcriptomic data from 
+    Open TG-GATEs and DrugMatrix, as well as manually curated relational data from the CTD.
+License: MIT + file LICENSE
+URL: https://github.com/ringku09/toxassay
+BugReports: https://github.com/ringku09/toxassay/issues
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+LinkingTo: 
+    Rcpp,
+    RcppArmadillo,
+    RcppEigen
+Imports: 
+    affy,
+    arules,
+    Biobase,
+    cli,
+    doParallel,
+    dplyr,
+    foreach,
+    glue,
+    igraph,
+    magrittr,
+    purrr,
+    Rcpp,
+    RcppEigen,
+    readr,
+    reshape2,
+    rlang,
+    STRINGdb,
+    tibble,
+    tidyr
