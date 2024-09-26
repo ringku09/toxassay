@@ -165,6 +165,11 @@
  #' @export
  cli::cli_alert_warning
 
+ cli_abort
+ #' @importFrom cli cli_abort
+ #' @export
+ cli::cli_abort
+
  #' @importFrom cli style_bold
  #' @export
  cli::style_bold
@@ -188,6 +193,10 @@
  #' @importFrom cli col_red
  #' @export
  cli::col_red
+
+ #' @importFrom cli col_green
+ #' @export
+ cli::col_green
 
  #' @importFrom cli cli_alert_info
  #' @export

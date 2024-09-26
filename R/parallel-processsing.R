@@ -101,8 +101,10 @@ start_parallel <- function(multicore = TRUE, error_call = caller_env(),  ...) {
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' cll <- start_parallel()
 #' stop_parallel(attr(cll, "cluster"))
+#' }
 stop_parallel <- function(cluster, ...)
 {
   parallel::stopCluster(cluster)

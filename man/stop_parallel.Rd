@@ -18,6 +18,8 @@ Exit cluster
 The function \code{stop_parallel()} is used to stop parallel processing.
 }
 \examples{
+\dontrun{
 cll <- start_parallel()
 stop_parallel(attr(cll, "cluster"))
+}
 }
