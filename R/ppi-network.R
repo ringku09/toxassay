@@ -51,7 +51,7 @@ setup_stringdb <- function(organism = c("human","rat"),
 #'
 #' @examples
 #' \dontrun{
-#' net_data <- get_netdata(
+#' net_data <- get_ppinet(
 #'   gene_data,
 #'   gene_col = "gene_name",
 #'   p.value_col = "group",
@@ -60,7 +60,7 @@ setup_stringdb <- function(organism = c("human","rat"),
 #'   cluster_method = "edge.betweenness"
 #' )
 #' }
-get_netdata <- function(gene_df,
+get_ppinet <- function(gene_df,
                         organism = c("human", "rat"),
                         cluster_method = c("edge.betweenness", "fastgreedy", "walktrap", "spinglass"),
                         n_percent = 5,
