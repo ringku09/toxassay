@@ -33,8 +33,8 @@
 #' @export
 core_degs <- function(gene_df = res4,
                         path_n = NULL,
-                        enrich_cutoff = 0.5,
-                        category = c("kegg", "go", "reactome", "wikipathways"),
+                        enrich_cutoff = 0.25,
+                        category = c("go", "kegg", "reactome", "wikipathways"),
                         organism = c("rat", "human"),
                         score_threshold = 200,
                         version = "12") {
