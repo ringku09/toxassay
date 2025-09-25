@@ -6,7 +6,7 @@
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-SEXP matrixProd(const Eigen::Map<Eigen::MatrixXd> A,
+SEXP matrix_prod(const Eigen::Map<Eigen::MatrixXd> A,
                 Eigen::Map<Eigen::MatrixXd> B){
   Eigen::MatrixXd C = A * B;
   return Rcpp::wrap(C);
