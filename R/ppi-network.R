@@ -33,7 +33,7 @@ setup_stringdb <- function(organism = c("human","rat"),
   return(string_db)
 }
 
-#' Get network data
+#' Get network data from STRING database
 #'
 #' The function `get_netdata()` is used to extract network data from gene table.
 #'
