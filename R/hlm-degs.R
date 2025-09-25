@@ -1,4 +1,4 @@
-#' Hierarchical linear model
+#' F-test for comparing group means in hierarchical data
 #'
 #' The `hlm()` function models gene expression data utilizing the hierarchical linear
 #' model (HLM).
@@ -42,9 +42,9 @@ hlm <- function(Y, A, B, a, p, n, error_call = rlang::caller_env()) {
   return(pval)
 }
 
-#' Identification of initial differentially expressed genes
+#' Differentially expressed genes identification using F-test in HLM
 #'
-#' The `de_genes()` function identify initial differentially expressed genes using the HLM.
+#' The `de_genes()` function identify differentially expressed genes between groups using the HLM.
 #'
 #' `de_genes()` identifies genes that exhibit statistically significant differential
 #' expression across two or more query compound groups. A gene is deemed statistically
@@ -115,7 +115,7 @@ de_genes <- function(...,
 #' Identification of causal differentially expressed genes
 #'
 #' The function `tgx_genes()` is used to find final gene set using Leave One Out Compound (LOOC) method.
-#' Genes misrepresented by a compound were removed using Leave One Out Compound (LOOC) method.
+#' Genes misrepresented by a single compound were removed using Leave One Out Compound (LOOC) method.
 #' In LOOC process, each compound is removed from the experiment and find differentially expressed (DE)
 #' genes for every LOO. The final gene set is therefore the intersection of the LOOC genes. Genes which
 #' are co-regulated by a specific compound then filter out in LOOC process.
