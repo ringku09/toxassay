@@ -35,7 +35,5 @@ probes2genes <- function(affy_ids, organism = "rat") {
   }
   gene_tab <- gene_tab[!duplicated(gene_tab$PROBEID), ]
   names(gene_tab) <- c("probe_id", "gene_symbol", "entrez_id", "ensembl_id", "gene_name")
-
-    tolower(names(gene_tab))
   return(gene_tab)
 }
