@@ -1,12 +1,16 @@
-#' Find gene information from probe set
+#' Map Affymetrix probe IDs to gene annotations
 #'
-#' The function `probes2genes()` is used to get gene name, symbol, entrezid id etc from probes id.
+#' `probes2genes()` retrieves gene-level annotation for Affymetrix probe set IDs,
+#' including gene symbols, Entrez IDs, Ensembl IDs, and gene names.
 #'
-#' @param affy_ids Affymetric probe IDs
-#' @param organism Sample organism used for experiment ("human" or "rat")
+#' @param affy_ids A character vector of Affymetrix probe set IDs.
+#' @param organism A character string specifying the organism used in the experiment.
+#'   Supported values are `"rat"` and `"human"`.
 #'
 #' @return
-#' A table of Ensembl gene symbol and other information
+#' A data frame containing probe IDs and their corresponding gene annotations,
+#' including gene symbol, Entrez ID, Ensembl ID, and gene name.
+#'
 #' @export
 #'
 #' @examples
@@ -30,5 +34,8 @@ probes2genes <- function(affy_ids, organism = "rat") {
     ))
   }
   gene_tab <- gene_tab[!duplicated(gene_tab$PROBEID), ]
+  names(gene_tab) <- c("probe_id", "gene_symbol", "entrez_id", "ensembl_id", "gene_name")
+
+    tolower(names(gene_tab))
   return(gene_tab)
 }
