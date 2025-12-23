@@ -1,41 +1,41 @@
-#' Get Transaction Data for Compounds, Genes, and Diseases
+#' Get transaction data for compounds, genes, and diseases
 #'
 #' @description
-#' The `get_transaction()` function processes and retrieves transaction data for specified compounds,
-#' genes, and diseases. It takes two data frames as input and filters the data based on the provided
-#' compounds, gene IDs, and disease IDs. The function merges the gene and disease data and returns
-#' a binary matrix indicating the presence of interactions between chemicals, genes, and diseases.
+#' The `get_transaction()` function combines compound–gene and compound–disease associations (e.g.,
+#' downloaded from CTD) into a single binary transaction matrix. The input tables are filtered by the
+#' requested `compounds`, `genes`, and `diseases`, reshaped to wide format, and merged by compound.
+#' The output matrix encodes whether each compound is associated with each gene and disease.
 #'
-#' @param compound_gene A data frame containing chemical and gene information.
-#'  It should have columns `ChemicalName`, `GeneSymbol`, and `OrganismID`, similar to the CTD database.
-#'  One can download this data using the function `get_ctd()`.
-#' @param compound_disease A data frame containing chemical and disease information.
-#'  It should have columns `ChemicalID` and `DiseaseID`, similar to the CTD database.
-#'  One can download this data using the function `get_ctd()`.
-#' @param compounds An optional character vector of compound names to filter.
-#'  If `NULL` (default), all compounds from `compound_gene` are used.
-#' @param gene_id An optional character vector of gene IDs to filter.
-#'  If `NULL` (default), all gene IDs from `compound_gene` are used.
-#' @param disease_id An optional character vector of disease IDs to filter.
-#'  If `NULL` (default), all disease IDs from `compound_disease` are used.
+#' @param compound_gene A data frame of compound–gene associations with columns
+#'   `ChemicalName`, `GeneSymbol`, and `OrganismID`. The data frame is the same as obtained from CTD.
+#' @param compound_disease A data frame of compound–disease associations with columns
+#'   `ChemicalName` and `DiseaseID`. The data frame is the same as obtained from CTD.
+#' @param compounds An optional character vector of compound names (`ChemicalName`) to filter.
+#'   If `NULL` (default), all compounds in `compound_gene` are used.
+#' @param genes An optional character vector of gene symbols (`GeneSymbol`) to filter.
+#'   If `NULL` (default), all gene symbols in `compound_gene` are used.
+#' @param diseases An optional character vector of disease IDs (`DiseaseID`) to filter.
+#'   If `NULL` (default), all disease IDs in `compound_disease` are used.
 #'
 #' @return A list with three components:
-#' \item{bin_data}{A binary matrix indicating the presence of interactions between chemicals, genes, and diseases.}
-#' \item{genes}{A vector of gene symbols included in the binary matrix.}
-#' \item{diseases}{A vector of disease IDs included in the binary matrix.}
+#' \item{bin_data}{A binary matrix indicating the presence (1) or absence (0) of associations. Rows
+#' correspond to compounds and columns correspond to genes and diseases.}
+#' \item{genes}{A character vector of gene symbols included in the binary matrix.}
+#' \item{diseases}{A character vector of disease IDs included in the binary matrix.}
 #'
 #' @examples
 #' chemical_name <- paste0("Compound", 1:10)
-#' gene_symbol <- paste0("GENE", 1:30)
-#' disease_id <- paste0("Disease", 1:30)
-#' compound_gene <- data.frame(chemical_name = sample(chemical_name, 100, replace = TRUE),
-#'                             gene_symbol = sample(gene_symbol, 100, replace = TRUE),
-#'                             organism_id = sample(c(9606, 10116), 100, replace = TRUE)) %>%
-#'                             dplyr::distinct()
-#' compound_disease <- data.frame(chemical_name = sample(chemical_name, 100, replace = TRUE),
-#'                                disease_id = sample(disease_id, 100, replace = TRUE)) %>%
-#'                                dplyr::distinct()
+#' gene_symbol <- paste0("GENE", 1:20)
+#' disease_id <- paste0("Disease", 1:20)
+#' compound_gene <- data.frame(
+#'   chemical_name = sample(chemical_name, 100, replace = TRUE),
+#'   gene_symbol   = sample(gene_symbol, 100, replace = TRUE),
+#'   organism_id   = sample(c(9606, 10116), 100, replace = TRUE))
+#' compound_disease <- data.frame(
+#'   chemical_name = sample(chemical_name, 100, replace = TRUE),
+#'   disease_id    = sample(disease_id, 100, replace = TRUE))
 #' get_transaction(compound_gene, compound_disease)
+#'
 #' @import arules
 #' @importFrom reshape2 dcast
 #' @export
@@ -119,36 +119,43 @@ get_transaction <- function(compound_gene,
   return(list(bin_data, genes, diseases))
 }
 
-
-#' Get Adverse Outcome Pathways (AOPs) from Transaction Data
+#' Get adverse outcome pathways (AOPs) from transaction data
 #'
 #' @description
-#' The `get_aops()` function processes transaction data to identify and retrieve
-#' AOPs based on specified genes and diseases. The function uses the Apriori algorithm
-#' to generate association rules, calculates confidence intervals,
-#' and returns a data frame of the resulting rules with additional quality measures.
+#' The `get_aops()` function identifies gene–disease associations from transaction data using the
+#' Apriori algorithm. It generates pairwise rules (length 2), filters them to gene → disease rules,
+#' computes confidence intervals for the selected `ci_metric`, and returns the resulting rules with
+#' additional quality measures.
 #'
-#' @param transaction A binary matrix indicating the presence of interactions between chemicals, genes, and diseases.
-#' @param genes A vector of gene symbols included in the binary matrix.
-#' @param diseases A vector of disease IDs included in the binary matrix.
-#' @param ci_metric A character string specifying the metric to use for confidence intervals. Default is `"lift"`.
+#' @param transaction A binary matrix indicating the presence (1) or absence (0) of associations
+#'   between compounds, genes, and diseases (typically `bin_data` returned by `get_transaction()`).
+#' @param genes A character vector of gene symbols included in `transaction` (typically returned by
+#'   `get_transaction()`).
+#' @param diseases A character vector of disease IDs included in `transaction` (typically returned by
+#'   `get_transaction()`).
+#' @param min_support Minimum support used by Apriori. Default is `0.3`.
+#' @param min_confidence Minimum confidence used by Apriori. Default is `0.5`.
+#' @param ci_metric A character string specifying the metric to use for confidence intervals.
+#'   Default is `"lift"`.
 #'
-#' @return A tibble containing the resulting association rules with columns for the left-hand side (LHS) and right-hand side (RHS) of each rule,
-#' along with various quality measures including support, confidence, lift, odds ratio, and confidence intervals.
+#' @return A tibble of association rules with columns describing the left-hand side (`lhs`) and
+#' right-hand side (`rhs`) and rule quality measures (e.g., support, confidence, lift, odds ratio,
+#' and confidence intervals).
 #'
 #' @examples
 #' chemical_name <- paste0("Compound", 1:10)
-#' gene_symbol <- paste0("GENE", 1:30)
-#' disease_id <- paste0("Disease", 1:30)
-#' compound_gene <- data.frame(chemical_name = sample(chemical_name, 100, replace = TRUE),
-#'                             gene_symbol = sample(gene_symbol, 100, replace = TRUE),
-#'                             organism_id = sample(c(9606, 10116), 100, replace = TRUE)) %>%
-#'                             dplyr::distinct()
-#' compound_disease <- data.frame(chemical_name = sample(chemical_name, 100, replace = TRUE),
-#'                                disease_id = sample(disease_id, 100, replace = TRUE)) %>%
-#'                                dplyr::distinct()
+#' gene_symbol <- paste0("GENE", 1:20)
+#' disease_id <- paste0("Disease", 1:20)
+#' compound_gene <- data.frame(
+#'   chemical_name = sample(chemical_name, 100, replace = TRUE),
+#'   gene_symbol   = sample(gene_symbol, 100, replace = TRUE),
+#'   organism_id   = sample(c(9606, 10116), 100, replace = TRUE))
+#' compound_disease <- data.frame(
+#'   chemical_name = sample(chemical_name, 100, replace = TRUE),
+#'   disease_id    = sample(disease_id, 100, replace = TRUE))
 #' trans_data <- get_transaction(compound_gene, compound_disease)
 #' get_aops(transaction = trans_data[[1]], genes = trans_data[[2]], diseases = trans_data[[3]])
+#'
 #' @importFrom stats confint
 #' @export
 get_aops <- function(transaction,
@@ -156,7 +163,8 @@ get_aops <- function(transaction,
                      diseases,
                      min_support = 0.3,
                      min_confidence = 0.5,
-                     ci_metric = "lift") {
+                     ci_metric = "lift",
+                     error_call = caller_env()) {
   if (!all(requireNamespace("arules", quietly = TRUE))) {
     cli::cli_abort(c("Packages `arules` required for AOP!",
                 "i" = "Please install `arules`."),
@@ -191,33 +199,36 @@ get_aops <- function(transaction,
   return(df_ap)
 }
 
-
-#' Calculate Disease Similarity Based on Gene Overlap
+#' Calculate disease similarity based on gene overlap
 #'
-#' This function calculates the similarity between diseases based on the overlap of associated genes.
+#' `disease_similarity()` computes pairwise disease similarity from a gene–disease link table by
+#' comparing overlap of associated genes. Similarity is calculated as overlap divided by the
+#' geometric mean of gene counts for each pair.
 #'
-#' @param disease_data A data frame containing disease information.
-#' @param gene_column The column name in `disease_data` that contains gene symbols.
-#' @param target_column The column name in `disease_data` that contains the target or disease information.
-#' @param genes An optional vector of genes to filter the data. If NULL, all genes in the data are used.
-#' @param condition An optional condition to filter the data. Default is TRUE.
+#' @param disease_data A data frame containing gene–disease links.
+#' @param gene_column The column in `disease_data` that contains gene symbols.
+#' @param target_column The column in `disease_data` that contains disease identifiers.
+#' @param genes An optional vector of genes to include. If `NULL`, all genes in `disease_data` are used.
+#' @param condition An optional filtering expression (as a character string) evaluated within
+#'   `disease_data`. Default is `TRUE`.
 #'
-#' @return A similarity matrix where each entry (i, j) represents the similarity between disease i and disease j.
+#' @return A numeric similarity matrix where entry (i, j) is the similarity between disease i and disease j.
 #'
 #' @examples
 #' chemical_name <- paste0("Compound", 1:10)
-#' gene_symbol <- paste0("GENE", 1:30)
-#' disease_id <- paste0("Disease", 1:30)
-#' compound_gene <- data.frame(chemical_name = sample(chemical_name, 100, replace = TRUE),
-#'                             gene_symbol = sample(gene_symbol, 100, replace = TRUE),
-#'                             organism_id = sample(c(9606, 10116), 100, replace = TRUE)) %>%
-#'                             dplyr::distinct()
-#' compound_disease <- data.frame(chemical_name = sample(chemical_name, 100, replace = TRUE),
-#'                                disease_id = sample(disease_id, 100, replace = TRUE)) %>%
-#'                                dplyr::distinct()
+#' gene_symbol <- paste0("GENE", 1:20)
+#' disease_id <- paste0("Disease", 1:20)
+#' compound_gene <- data.frame(
+#'   chemical_name = sample(chemical_name, 100, replace = TRUE),
+#'   gene_symbol   = sample(gene_symbol, 100, replace = TRUE),
+#'   organism_id   = sample(c(9606, 10116), 100, replace = TRUE))
+#' compound_disease <- data.frame(
+#'   chemical_name = sample(chemical_name, 100, replace = TRUE),
+#'   disease_id    = sample(disease_id, 100, replace = TRUE))
 #' trans_data <- get_transaction(compound_gene, compound_disease)
 #' aop_data <- get_aops(transaction = trans_data[[1]], genes = trans_data[[2]], diseases = trans_data[[3]])
 #' disease_similarity(aop_data, gene_column = lhs, target_column = rhs)
+#'
 #' @export
 disease_similarity <- function(disease_data,
                                gene_column,
@@ -260,35 +271,36 @@ disease_similarity <- function(disease_data,
   return(similarity_matrix)
 }
 
-
-
-
-#' Calculate gene Similarity Based on Gene Overlap
+#' Calculate gene similarity based on disease overlap
 #'
-#' This function calculates the similarity between genes based on the overlap of associated diseases.
+#' `gene_similarity()` computes pairwise gene similarity from a gene–disease link table by comparing
+#' overlap of associated diseases. Similarity is calculated as overlap divided by the geometric mean
+#' of disease counts for each pair.
 #'
-#' @param link_data A data frame containing gene and disease information.
-#' @param gene_column The column name in `disease_data` that contains gene symbols.
-#' @param target_column The column name in `disease_data` that contains the target or disease information.
-#' @param genes An optional vector of genes to filter the data. If NULL, all genes in the data are used.
-#' @param condition An optional condition to filter the data. Default is TRUE.
+#' @param gene_data A data frame containing gene–disease links.
+#' @param disease_column The column in `gene_data` that contains disease identifiers.
+#' @param target_column The column in `gene_data` that contains gene symbols.
+#' @param diseases An optional vector of diseases to include. If `NULL`, all diseases in `gene_data` are used.
+#' @param condition An optional filtering expression (as a character string) evaluated within
+#'   `gene_data`. Default is `TRUE`.
 #'
-#' @return A similarity matrix where each entry (i, j) represents the similarity between disease i and disease j.
+#' @return A numeric similarity matrix where entry (i, j) is the similarity between gene i and gene j.
 #'
 #' @examples
 #' chemical_name <- paste0("Compound", 1:10)
-#' gene_symbol <- paste0("GENE", 1:30)
-#' disease_id <- paste0("Disease", 1:30)
-#' compound_gene <- data.frame(chemical_name = sample(chemical_name, 100, replace = TRUE),
-#'                             gene_symbol = sample(gene_symbol, 100, replace = TRUE),
-#'                             organism_id = sample(c(9606, 10116), 100, replace = TRUE)) %>%
-#'                             dplyr::distinct()
-#' compound_disease <- data.frame(chemical_name = sample(chemical_name, 100, replace = TRUE),
-#'                                disease_id = sample(disease_id, 100, replace = TRUE)) %>%
-#'                                dplyr::distinct()
+#' gene_symbol <- paste0("GENE", 1:20)
+#' disease_id <- paste0("Disease", 1:20)
+#' compound_gene <- data.frame(
+#'   chemical_name = sample(chemical_name, 100, replace = TRUE),
+#'   gene_symbol   = sample(gene_symbol, 100, replace = TRUE),
+#'   organism_id   = sample(c(9606, 10116), 100, replace = TRUE))
+#' compound_disease <- data.frame(
+#'   chemical_name = sample(chemical_name, 100, replace = TRUE),
+#'   disease_id    = sample(disease_id, 100, replace = TRUE))
 #' trans_data <- get_transaction(compound_gene, compound_disease)
-# aop_data <- get_aops(transaction = trans_data[[1]], genes = trans_data[[2]], diseases = trans_data[[3]])
-# gene_similarity(aop_data, disease_column = rhs, target_column = lhs)
+#' aop_data <- get_aops(transaction = trans_data[[1]], genes = trans_data[[2]], diseases = trans_data[[3]])
+#' gene_similarity(aop_data, disease_column = rhs, target_column = lhs)
+#'
 #' @export
 gene_similarity <- function(gene_data,
                             disease_column,
@@ -327,42 +339,34 @@ gene_similarity <- function(gene_data,
   return(similarity_matrix)
 }
 
-
-
-
-
-
-
-
-#' Create Adverse Outcome Pathway (AOP) Network data
+#' Create Adverse Outcome Pathway (AOP) network data
 #'
 #' @description
-#' The `aop_network()` function constructs a network of Adverse Outcome Pathways (AOPs)
-#' from the provided AOP data frame and disease vocabulary. It generates a network graph
-#' with nodes representing diseases and genes, and edges representing the connections
-#' between them, weighted by a specified column.
+#' The `aop_network()` function constructs network-ready edge and vertex tables from an AOP rule
+#' table and a disease vocabulary. Diseases and genes are represented as nodes, and edges connect
+#' diseases to genes with weights.
 #'
-#' @param aop_df A data frame containing AOP data with columns for the right-hand side (rhs)
-#'   and left-hand side (lhs) of the associations.
-#' @param dise_voc A data frame containing the disease vocabulary with columns `DiseaseID`, `DiseaseName`,
+#' @param aop_df A data frame containing AOP rules, including `lhs` and `rhs`, and a numeric column
+#'   referenced by `weight_column`.
+#' @param dise_voc A data frame containing disease vocabulary with columns `DiseaseID`, `DiseaseName`,
 #'   and `DiseaseGroup`.
-#' @param weight_column A string specifying the column in `aop_df` to use as the weight for the edges.
+#' @param weight_column A column name in `aop_df` used to weight edges.
 #'
 #' @return A list with two components:
-#' \item{edges}{A data frame representing the edges of the network, with columns `from`, `to`, and `weight`.}
-#' \item{vertices}{A data frame representing the vertices of the network, with columns `name`, `nodes`, and `size`.}
+#' \item{edges}{A data frame with columns `from`, `to`, and `weight`.}
+#' \item{vertices}{A data frame with columns `name`, `nodes`, and `size`.}
 #'
 #' @examples
 #' \dontrun{
-#' # Sample data frames
-#' aop_df <- data.frame(lhs = c("Gene1", "Gene2"), rhs = c("Disease1", "Disease2"), support = c(0.8, 0.6))
-#' dise_voc <- data.frame(DiseaseID = c("Disease1", "Disease2"), DiseaseName = c("Disease A", "Disease B"), DiseaseGroup = c("Group1", "Group2"))
-#'
-#' # Create AOP network
+#' aop_df <- data.frame(lhs = c("Gene1", "Gene2"),
+#'                      rhs = c("Disease1", "Disease2"),
+#'                      support = c(0.8, 0.6))
+#' dise_voc <- data.frame(DiseaseID = c("Disease1", "Disease2"),
+#'                        DiseaseName = c("Disease A", "Disease B"),
+#'                        DiseaseGroup = c("Group1", "Group2"))
 #' aop_network_data <- aop_network(aop_df, dise_voc, "support")
-#' edges <- aop_network_data$edges
-#' vertices <- aop_network_data$vertices
 #' }
+#'
 #' @importFrom dplyr filter mutate select rename
 #' @importFrom rlang enquo
 #' @export
@@ -393,5 +397,3 @@ aop_network <- function(aop_df, dise_voc, weight_column) {
   aop_data <- list(edges = edge_df, vertices = vert_df)
   return(aop_data)
 }
-
-
