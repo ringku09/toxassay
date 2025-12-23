@@ -1,32 +1,28 @@
-
-#' Structure of levels in the data for a compound
+#' Summarize dose, time, and replicate structure for a compound
 #'
 #' @description
+#' `compound_str()` summarizes the experimental design for a single compound by reporting (1) the
+#' number of dose levels, (2) the number of time points within each dose level, and (3) the number of
+#' samples (replicates) for each dose–time combination.
 #'
-#' The `compound_str()` function is used to find the total number of dose levels,
-#' the time points within each dose, and the number of replicates used for each
-#' dose-time combination.
+#' The returned values describe the hierarchical structure of the data. For example, if a compound has
+#' 3 dose levels and each dose is measured at 4 time points, then `dose = 3` and `time = c(4, 4, 4)`.
+#' If each dose–time combination has 3 replicates, then `replication` will contain 12 entries (3 doses ×
+#' 4 times), each equal to 3.
 #'
-#' The `compound_str()` function calculates the total number of dose levels used for a
-#' compound in the experiment, as well as the total number of time points for each dose
-#' and the total number of replicates for each time point within each dose. For instance,
-#' if a compound has 3 dose labels, there are 3 labels for the dose. If each dose label
-#' is measured at 4 time points, then the number of labels for time levels would be
-#' (4, 4, 4) corresponding to the 3 dose labels. Finally, if each dose-time combination
-#' uses 3 replicates, then the number of labels for replicates would be 3 * 4 = 12
-#' (3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3). Therefore, the total number of labels at each
-#' level is a product of the labels from earlier levels.
-#'
-#' @param compound Compound name (or abbreviation for `TG-GATEs` database)
+#' @param compound Name of the compound.
 #' @inheritParams expand_data
 #'
-#' @returns
-#' A list of dose, time and replication
-#' @export
+#' @return A list with three elements:
+#' \item{dose}{Number of dose levels for `compound`.}
+#' \item{time}{Integer vector giving the number of time points within each dose level.}
+#' \item{replication}{Integer vector giving the number of replicates for each dose–time combination.}
 #'
 #' @examples
-#' sim_data <- simulate_tgxdata(n_de = 10, n_ee = 10, n_com = c(5,5))
-#' compound_str(compound = "Compound1",  metadata = sim_data$metadata)
+#' sim_data <- simulate_tgxdata(n_de = 10, n_ee = 10, n_com = c(5, 5))
+#' compound_str(compound = "Compound1", metadata = sim_data$metadata)
+#'
+#' @export
 compound_str <- function(compound, metadata) {
   if (length(compound) > 1) {
     cli_abort(c(
@@ -58,33 +54,35 @@ compound_str <- function(compound, metadata) {
   return(lev_list)
 }
 
-#' Structure of experimental data for analyzing targeted toxicity
+#' Summarize experimental data structure for compound groups
 #'
-#' The `data_str()` function finds the number of levels in dose, time point, and
-#' replication for a list of compounds in different groups. `data_str()` uses the
-#' function `data_str()` to determine the structure of levels in compounds and
-#' concatenates them to create the data structure for multiple compounds in a group.
+#' @description
+#' `data_str()` summarizes the hierarchical structure of an experimental design involving multiple
+#' compounds organized into one or more groups. For each compound, the function determines the
+#' number of dose levels, time points, and replicates using `compound_str()`, and then aggregates
+#' this information across compounds and groups to describe the overall data structure.
 #'
-#' @param ... Either multiple vectors of individual compound names or multiple vectors of
-#'   compound names grouped in a list.
+#' @param ... One or more character vectors of compound names, or a list of character vectors
+#'   defining compound groups.
 #' @inheritParams expand_data
 #'
-#' @seealso
-#'    [compound_str()] for getting structure of a compound
-#'
 #' @return
-#' A list total levels in different stage or a class of `ToxAssay` object .
-#'  * group
-#'  * compound
-#'  * dose
-#'  * time
-#'  * replication
-#' @export
+#' An object of class `toxassay`, represented as a list with the following elements:
+#' \item{group}{Number of compound groups.}
+#' \item{compound}{Integer vector giving the number of compounds in each group.}
+#' \item{dose}{Integer vector giving the number of dose levels for each compound.}
+#' \item{time}{Integer vector giving the number of time points for each dose level.}
+#' \item{replication}{Integer vector giving the number of replicates for each dose–time combination.}
 #'
 #' @examples
-#' sim_data <- simulate_tgxdata(n_de = 10, n_ee = 10, n_com = c(5,5))
+#' sim_data <- simulate_tgxdata(n_de = 10, n_ee = 10, n_com = c(5, 5))
 #' gr <- list(A = paste0("Compound", 1:5), B = paste0("Compound", 6:10))
 #' data_str(gr, metadata = sim_data$metadata)
+#'
+#' @seealso
+#' [compound_str()] for summarizing the structure of a single compound.
+#'
+#' @export
 data_str <- function(..., metadata, error_call = caller_env()) {
   comps_gr <- test_group(...)
   group <- length(comps_gr)
@@ -96,33 +94,37 @@ data_str <- function(..., metadata, error_call = caller_env()) {
   rep_lev <- do.call(c,lapply(zz, "[[", 3))
   comps_lev <- list(group, comp_gr, dose_lev, time_lev, rep_lev)
   names(comps_lev) <- c("group", "compound", "dose", "time", "replication")
-  structure(comps_lev, class = "ToxAssay")
+  structure(comps_lev, class = "toxassay")
   #return(comps_lev)
 }
 
-#' Quadratic matrices for F-statistics
+#' Quadratic and summary matrices for F-statistics of HLM
 #'
-#' The `get_quadmat()` function calculates the quadratic matrices **A** and **B**
+#' @description
+#' `get_matrix()` constructs quadratic matrices used for F-statistics and summary (averaging) matrices
+#' for each level of the experimental hierarchy (group, compound, dose, and time). The input
+#' `expr_str` describes the nesting structure of the experiment and can be created with [data_str()].
 #'
-#' @param expr_str The structure of the experiment, either a list detailing the total
-#'   number of labels at each level or a `ToxAssay` object representing the data
-#'   structure, can be obtained using the [data_str()] function.
+#' @param expr_str The structure of the experiment, either a list describing the total number of
+#'   labels at each level or a `ToxAssay` object representing the data structure (e.g., returned by
+#'   [data_str()]).
 #'
-#' @return a list of design matrices and others information in the experiment
-#'   * `Fstat_A`, quadratic matrix A
-#'   * `BFstat_A`, quadratic matrix B
-#'   * `group_mat`, summary matrix used to calculate average expression at group level
-#'   * `compound_mat`, summary matrix used to calculate average expression at compound level
-#'   * `dose_mat`, summary matrix used to calculate average expression at dose level
-#'   * `time_mat`, summary matrix used to calculate average expression at time level
-#'
-#' @export
+#' @return
+#' An object of class `toxasaay` containing:
+#' \item{A}{Quadratic matrix used in the F-statistic calculation.}
+#' \item{B}{Quadratic matrix used in the F-statistic calculation.}
+#' \item{group_mat}{Summary matrix used to compute average expression at the group level.}
+#' \item{compound_mat}{Summary matrix used to compute average expression at the compound level.}
+#' \item{dose_mat}{Summary matrix used to compute average expression at the dose level.}
+#' \item{time_mat}{Summary matrix used to compute average expression at the time level.}
 #'
 #' @examples
-#' sim_data <- simulate_tgxdata(n_de = 10, n_ee = 10, n_com = c(5,5))
+#' sim_data <- simulate_tgxdata(n_de = 10, n_ee = 10, n_com = c(5, 5))
 #' gr <- list(A = paste0("Compound", 1:5), B = paste0("Compound", 6:10))
 #' sim_str <- data_str(gr, metadata = sim_data$metadata)
 #' summary_mat <- get_matrix(sim_str)
+#'
+#' @export
 get_matrix <- function(expr_str) {
   test_datastr(expr_str)
   a <- expr_str[[1]]
@@ -169,6 +171,6 @@ get_matrix <- function(expr_str) {
     dose_mat = qGama1,
     time_mat = qDelta1
   )
-  structure(retn, class = "ToxAssay")
+  structure(retn, class = "toxassay")
 }
 
