@@ -1,20 +1,31 @@
-#' Validate and Auto-Correct Function Inputs
+#' Validate and optionally auto-correct function input
 #'
-#' This function validates the input provided by the user against a list of expected inputs.
-#' It can automatically correct the input if `auto_input` is set to `TRUE`,
-#' or it will prompt the user with an error message if the input is invalid.
+#' @description
+#' `test_input()` checks whether a user-supplied argument matches a set of allowed values. If the
+#' input is missing, empty, invalid, or contains multiple values, the function raises an informative
+#' error. When `auto_input = TRUE`, invalid or multiple inputs are automatically replaced with the
+#' first valid value in `inputs`.
 #'
-#' @param input The input provided by the user to be validated.
-#' @param inputs A vector of valid inputs to compare against. If `inputs` is missing, the function will attempt to retrieve the default inputs from the parent environment.
-#' @param auto_input Logical value indicating whether to automatically correct the input to the first valid entry in `inputs` if multiple or invalid inputs are provided. Default is `FALSE`.
-#' @param error_call The environment in which to evaluate the error call. Default is `caller_env()`.
+#' @param input The value provided by the user to be validated.
+#' @param inputs A character vector of allowed values. If missing, the function attempts to retrieve
+#'   the default valid values from the parent function’s formal arguments.
+#' @param auto_input Logical indicating whether to automatically replace invalid or multiple inputs
+#'   with the first element of `inputs`. Default is `FALSE`.
+#' @param error_call The environment used for error reporting. Default is `caller_env()`.
 #'
-#' @return This function does not return a value. It either validates the input or throws an error if the input is invalid.
+#' @return
+#' This function is called for its side effects only. It either validates (and possibly modifies)
+#' `input` or signals an error; no value is returned.
 #'
 #' @examples
-#' # Assume valid inputs are "A", "B", and "C"
+#' # Validate input against a set of allowed values
 #' valid_inputs <- c("A", "B", "C")
 #' test_input(input = "A", inputs = valid_inputs)
+#'
+#' \dontrun{
+#' # Automatically correct invalid input
+#' test_input(input = "X", inputs = valid_inputs, auto_input = TRUE)
+#' }
 #'
 #' @export
 test_input <- function(input, inputs, auto_input = FALSE, error_call = caller_env()) {
@@ -59,88 +70,270 @@ test_input <- function(input, inputs, auto_input = FALSE, error_call = caller_en
   }
 }
 
-
-#' Validate Expression and Attribute Data
+#' Validate required column names in a data object
 #'
-#' This function checks the validity of the expression data and attribute data provided by the user.
-#' It ensures that the expression data is a matrix and that the attribute data is a data frame.
-#' Additionally, it verifies that the column names in the expression data match the barcodes specified in the attribute data.
+#' @description
+#' `test_column()` checks whether one or more specified column names are present in a given data
+#' object. The function supports data frames, tibbles, and named lists, and provides informative
+#' error messages when required columns are missing or the input object is of an unsupported type.
 #'
-#' @param expr_data A matrix or array containing expression data. The matrix should have `probes` as rows and `barcode` as columns.
-#' @param attr_data A data frame or tibble containing the attribute data, with required columns including `barcode`, `compound_name`, `dose_level`, and `time_level`.
+#' @param column A character vector specifying the name(s) of the column(s) to validate.
+#' @param df A data frame, tibble, or named list in which the presence of `column` is checked.
+#' @param error_call The environment used for error reporting. Default is `rlang::caller_env()`.
 #'
-#' @return This function does not return a value. It is used for validation and will throw an error if the data is not valid.
+#' @return
+#' This function is called for its side effects only. It returns `NULL` invisibly if all specified
+#' columns are present; otherwise it signals an error.
 #'
 #' @details
-#' - If `expr_data` is not a matrix or array, an error is thrown indicating that the expression data must be a matrix.
-#' - If `attr_data` is not a data frame, an error is thrown indicating that the attribute data must be a data frame.
-#' - The function also checks that all column names in `expr_data` are present in the `barcode` column of `attr_data`. If any are missing, an error is thrown.
+#' The function performs the following checks:
+#' \itemize{
+#'   \item `df` is a data frame, tibble, or list.
+#'   \item `column` is non-empty.
+#'   \item All elements of `column` are present in `names(df)`.
+#' }
+#' If columns are missing, the error message lists unavailable columns and suggests valid
+#' alternatives when possible.
+#'
+#' @examples
+#' df <- data.frame(a = 1:3, b = 4:6, c = 7:9)
+#' test_column("a", df)  # Valid column
+#'
+#' \dontrun{
+#' # Missing column triggers an error
+#' test_column("d", df)
+#' }
+#'
+#' @export
+test_column <- function(column, df, error_call = rlang::caller_env()) {
+  if (! (is.data.frame(df) | tibble::is_tibble(df) || is.list(df))) {
+    cli::cli_abort(c("{.arg df} must be a `data.frame` or `tibble` or `list`.",
+                     "i" = "Please provide the correct {.arg df}."), call = error_call)
+  }
+  columns <- names(df)
+  if (length(columns) > 9L) {
+    new_columns <- c(columns[1:9], "...", columns[length(columns)])
+  } else {
+    new_columns <- columns
+  }
+  if (length(column) == 0) {
+    cli::cli_abort(c("Input {gsub('_', ' ', deparse(substitute(column)))} must have at least 1 location.",
+                     "i" = "Please select column from {style_italic(col_blue(backtick(new_columns)))} \\
+                ,or provide the correct {backtick(deparse(substitute(df)))}."), call = error_call)
+  }
+  # if (length(column) > 1) {
+  #   cli_abort(c(
+  #     "Multiple {backtick(gsub('_', ' ', deparse(substitute(columns))))} are not allowed",
+  #     "x" = "You have provided {backtick(gsub('_', ' ', deparse(substitute(columns))))} {style_bold(col_red(backtick(column)))}.",
+  #     "i" = "Please choose either {add_or(style_bold(col_green(backtick(column))))} instead."
+  #   ))
+  # }
+  #
+  exist_idx <- column %in% columns
+  miss_col <- column[!exist_idx]
+  if (length(miss_col) > 9L) {
+    new_column <- c(miss_col[1:9], "...", miss_col[length(miss_col)])
+  } else {
+    new_column <- miss_col
+  }
+  if (any(!exist_idx)) {
+    cli::cli_abort(c("Input {.arg column} must available in the {backtick(deparse(substitute(df)))}.",
+                     "x" = "{style_bold(col_red(backtick(new_column)))} column{?s} \\
+                {?is\are} not available in {backtick(deparse(substitute(df)))}.",
+                     "i" = "Please select column from {style_italic(col_blue(backtick(new_columns)))} \\
+                ,or provide the correct {backtick(deparse(substitute(df)))}."), call = error_call)
+  }
+}
+
+#' Validate Input Against a List of Elements
+#'
+#' This function checks whether a given `input` is present in a specified list of `elements`.
+#' If the input is missing, empty, or contains elements not found in the list, the function
+#' throws an informative error message using `cli_abort`.
+#'
+#' @param input A vector representing the input to be validated against the `elements`.
+#' @param elements A vector of valid elements that `input` should be compared against.
+#' @param error_call The environment to be used in the `cli_abort` call for error reporting. Default is `caller_env()`.
+#'
+#' @return This function does not return a value. It is used for validation and will throw an error if validation fails.
+#'
+#' @examples
+#' valid_elements <- c("apple", "banana", "cherry")
+#' test_element("apple", valid_elements)  # No error
+#' \dontrun{
+#' test_element("orange", valid_elements) # Throws an error
+#' }
+#' @export
+
+
+
+#' Validate input values against a reference set
+#'
+#' @description
+#' `test_element()` verifies that one or more input values are present in a predefined set of valid
+#' elements. If the input is missing, empty, or contains values not included in `elements`, the
+#' function raises an informative error message.
+#'
+#' @param input A vector of values to be validated.
+#' @param elements A vector defining the set of valid values against which `input` is checked.
+#' @param error_call The environment used for error reporting. Default is `rlang::caller_env()`.
+#'
+#' @return
+#' This function is called for its side effects only. It returns `NULL` invisibly if validation
+#' succeeds; otherwise it signals an error.
+#'
+#' @examples
+#' valid_elements <- c("apple", "banana", "cherry")
+#' test_element("apple", valid_elements)
+#'
+#' \dontrun{
+#' # Invalid input triggers an error
+#' test_element("orange", valid_elements)
+#' }
+#'
+#' @export
+test_element <- function(input, elements, error_call = rlang::caller_env()) {
+  if (length(elements) > 9L) {
+    new_inputs <- c(elements[1:9], "...", elements[length(elements)])
+  } else {
+    new_inputs <- elements
+  }
+  if (rlang::is_missing(input) | rlang::is_empty(input)) {
+    cli::cli_abort(c("{backtick(deparse(substitute(input)))} is missing.",
+                     "i" = "Please choose either {add_or(style_bold(col_green(backtick(new_inputs))))} instead."),
+                   wrap = TRUE, call = error_call)
+  }
+  # if (length(input) == size) {
+  #   cli_abort(c("{backtick(deparse(substitute(input)))} is missing.",
+  #               "i" = "Please choose either {add_or(style_bold(col_green(backtick(inputs))))} instead."),
+  #             wrap = TRUE, call = error_call)
+  # }
+
+  if (length(input) == 0L) {
+    cli::cli_abort(c("Input {backtick(deparse(substitute(input)))} must have at least 1 location.",
+                     "i" = "Please choose either {add_or(style_bold(col_green(backtick(new_inputs))))} instead."),
+                   wrap = TRUE, call = error_call)
+  }
+
+  exist_idx <- input %in% elements
+  miss_element <- input[!exist_idx]
+  if (length(miss_element) > 9L) {
+    new_element <- c(miss_element[1:9], "...", miss_element[length(miss_element)])
+  } else {
+    new_element <- miss_element
+  }
+  if (any(!exist_idx)) {
+    cli::cli_abort(c("Input {backtick(deparse(substitute(input)))} must available in the \\
+                {backtick(deparse(substitute(elements)))}.",
+                     "x" = "{style_bold(col_red(backtick(new_element)))} element{?s} \\
+                {?is\are} not available in {backtick(deparse(substitute(elements)))}.",
+                     "i" = "Please select element from {style_italic(col_blue(backtick(new_inputs)))}."), call = error_call)
+  }
+}
+
+#' Validate perturbed gene expression data and corresponding metadata
+#'
+#' @description
+#' `test_data()` validates perturbed gene expression data and its corresponding metadata prior to
+#' downstream analysis. It ensures that the expression matrix and metadata table are compatible,
+#' correctly formatted, and internally consistent with respect to sample identifiers.
+#'
+#' @param ge_matrix A matrix or array of perturbed gene expression values with `probes` in rows and
+#'   `barcode` in columns.
+#' @param metadata A data frame or tibble containing sample metadata. Must include the columns
+#'   `barcode`, `compound_name`, `dose_level`, and `time_level`.
+#' @param error_call The environment used for error reporting. Default is `rlang::caller_env()`.
+#'
+#' @return
+#' This function is called for its side effects only. It returns `NULL` invisibly if validation
+#' passes; otherwise it signals an error.
+#'
+#' @details
+#' The function checks that:
+#' \itemize{
+#'   \item `ge_matrix` is a matrix or array.
+#'   \item `metadata` is a data frame (including tibbles).
+#'   \item Required metadata columns are present.
+#'   \item All expression columns are described by `metadata$barcode`.
+#' }
 #'
 #' @examples
 #' tgx_data <- simulate_tgxdata(n_de = 20, n_ee = 10, n_com = c(3, 3))
 #' test_data(tgx_data$expression, tgx_data$metadata)
+#'
 #' \dontrun{
-#' # Example with invalid data
-#' expr_data_invalid <- array(rnorm(100), dim = c(10, 10, 1))
-#' attr_data_invalid <- list(barcode = paste0("sample", 1:10))
-#' test_data(expr_data_invalid, attr_data_invalid) # This will throw an error
+#' # Invalid class of metadata
+#' gemat_invalid <- array(rnorm(100), dim = c(10, 10, 1))
+#' metadata_invalid <- list(barcode = paste0("sample", 1:10))
+#' test_data(gemat_invalid, metadata_invalid)
+#'
+#' # Invalid barcode
+#' tgx_data <- simulate_tgxdata(n_de = 20, n_ee = 10, n_com = c(3, 3))
+#' tgx_data$metadata$barcode <- paste0("sample", 1:nrow(tgx_data$metadata))
+#' test_data(tgx_data$expression, tgx_data$metadata)
 #' }
 #'
 #' @export
-test_data <- function(expr_data, attr_data, error_call = rlang::caller_env()) {
-  if (!inherits(expr_data, c("matrix", "array"))) {
+test_data <- function(ge_matrix, metadata, error_call = rlang::caller_env()) {
+  if (!inherits(ge_matrix, c("matrix", "array"))) {
     cli_abort(c("The expression data must be a matrix.",
-                "x" = "The class {style_bold(col_cyan(backtick(class(expr_data))))} of \\
+                "x" = "The class {style_bold(col_cyan(backtick(class(ge_matrix))))} of \\
                 expression data {?is/are} not supported.",
                 "i" = "Please make expression data as matrix \\
              (`probes` in rows and `barcode` in columns)."), call = error_call)
 
   }
-  if (!rlang::inherits_any(attr_data, c("tbl_df", "tbl", "data.frame"))) {
-    cli::cli_abort(c("The attribute data must be a data frame.",
-                "x" = "The class {style_bold(col_cyan(backtick(class(attr_data))))} of \\
+  if (!rlang::inherits_any(metadata, c("tbl_df", "tbl", "data.frame"))) {
+    cli::cli_abort(c("The metadata must be a data frame.",
+                "x" = "The class {style_bold(col_cyan(backtick(class(metadata))))} of \\
                 attribute data {?is/are} not supported.",
-                "i" = "Please make attribute data as data frame."), call = error_call)
+                "i" = "Please make meatadata as data frame."), call = error_call)
 
   }
-  test_column(c("barcode", "compound_name", "dose_level", "time_level"), attr_data)
-  match_bar <- colnames(expr_data) %in% attr_data$barcode
+  test_column(c("barcode", "compound_name", "dose_level", "time_level"), metadata)
+  match_bar <- colnames(ge_matrix) %in% metadata$barcode
   if (any(!match_bar)) {
     cli::cli_abort(c("All columns/samples in expression data must given in metadata.",
-                "x" = "{style_bold(col_cyan(backtick(colnames(expr_data)[match_bar])))} column{?s} \\
+                "x" = "{style_bold(col_cyan(backtick(colnames(ge_matrix)[match_bar])))} column{?s} \\
                 {?is/are} not described in the metadata.",
-                "i" = "Please remove unspecified columns from the expression data. After that you \\
+                "i" = "Please remove unspecified columns from the ge_matrix. After that you \\
                can update your data by calling the function `update_data()`"), call = error_call)
   }
 }
 
 
-#' Validate and Group Compounds
+#' Validate and standardize compound groups
 #'
-#' This function checks and organizes compound groups provided as input arguments.
-#' It ensures that the inputs are of appropriate types (character, factor, or list) and
-#' provides informative error messages if the inputs are not valid.
+#' @description
+#' `test_group()` validates compound groups supplied through `...` and returns them in a consistent
+#' format. Inputs may be provided as multiple vectors/factors/lists, or as a single list containing
+#' groups. The function checks that the supplied groups are of supported types and provides
+#' informative errors when inputs are malformed or inconsistent.
 #'
-#' @param ... Compound groups supplied as vectors, lists, or factors containing compound names or abbreviations.
-#' If a single list is provided, it will be used directly. Otherwise, multiple vectors or lists can be supplied.
-#' @param error_call The environment in which the error is raised. Default is the caller environment (`caller_env()`).
+#' @param ... Compound groups supplied as vectors, factors, or lists containing compound names.
+#'   If a single list is provided, it is treated as the set of groups; otherwise,
+#'   each argument in `...` is treated as a separate group.
+#' @param error_call The environment used for error reporting. Default is `rlang::caller_env()`.
 #'
-#' @return A named list of compound groups. If names are not provided, they will be automatically assigned as "Group_A", "Group_B", etc.
+#' @return A named list of compound groups. If group names are not provided, they are assigned as
+#' `"Group_A"`, `"Group_B"`, etc.
 #'
 #' @examples
-#' # Example with valid input
+#' # Two groups provided as separate vectors
 #' group1 <- c("compound1", "compound2")
 #' group2 <- c("compound3", "compound4")
 #' test_group(group1, group2)
 #'
-#' # Example with a list
-#' groups <- list(group1 = c("compound1", "compound2"), group2 = c("compound3", "compound4"))
+#' # Groups provided as a single list
+#' groups <- list(group1 = c("compound1", "compound2"),
+#'                group2 = c("compound3", "compound4"))
 #' test_group(groups)
 #'
-#' # Example with mixed input types (this will trigger an error)
 #' \dontrun{
-#' # test_group(group1, group2, list("compound5"))
+#' # Mixed input types may trigger an error depending on the supplied objects
+#' test_group(group1, group2, list("compound5"))
 #' }
+#'
 #' @export
 test_group <- function(..., error_call = rlang::caller_env()) {
   comps_gr <- rlang::list2(...)
@@ -181,148 +374,41 @@ test_group <- function(..., error_call = rlang::caller_env()) {
   return(comps_gr)
 }
 
-#' Validate Input Against a List of Elements
+#' Validate data structure for the `toxassay` class
 #'
-#' This function checks whether a given `input` is present in a specified list of `elements`.
-#' If the input is missing, empty, or contains elements not found in the list, the function
-#' throws an informative error message using `cli_abort`.
+#' @description
+#' `test_datastr()` validates that an input object conforms to the expected structure of a
+#' `ToxAssay`. The input must be either an object of class `toxassay` or a list of length five,
+#' representing the experimental hierarchy: group, compound, dose, time, and replication.
 #'
-#' @param input A vector representing the input to be validated against the `elements`.
-#' @param elements A vector of valid elements that `input` should be compared against.
-#' @param error_call The environment to be used in the `cli_abort` call for error reporting. Default is `caller_env()`.
+#' @param expr_str An object to be validated. Must be either a `toxassay` object or a list with
+#'   exactly five elements corresponding to `group`, `compound`, `dose`, `time`, and `replication`.
+#' @param error_call The environment used for error reporting. Default is `rlang::caller_env()`.
 #'
-#' @return This function does not return a value. It is used for validation and will throw an error if validation fails.
-#'
-#' @examples
-#' valid_elements <- c("apple", "banana", "cherry")
-#' test_element("apple", valid_elements)  # No error
-#' \dontrun{
-#' test_element("orange", valid_elements) # Throws an error
-#' }
-#' @export
-test_element <- function(input, elements, error_call = rlang::caller_env()) {
-  if (length(elements) > 9L) {
-    new_inputs <- c(elements[1:9], "...", elements[length(elements)])
-  } else {
-    new_inputs <- elements
-  }
-  if (rlang::is_missing(input) | rlang::is_empty(input)) {
-    cli::cli_abort(c("{backtick(deparse(substitute(input)))} is missing.",
-                "i" = "Please choose either {add_or(style_bold(col_green(backtick(new_inputs))))} instead."),
-              wrap = TRUE, call = error_call)
-  }
-  # if (length(input) == size) {
-  #   cli_abort(c("{backtick(deparse(substitute(input)))} is missing.",
-  #               "i" = "Please choose either {add_or(style_bold(col_green(backtick(inputs))))} instead."),
-  #             wrap = TRUE, call = error_call)
-  # }
-
-  if (length(input) == 0L) {
-    cli::cli_abort(c("Input {backtick(deparse(substitute(input)))} must have at least 1 location.",
-                "i" = "Please choose either {add_or(style_bold(col_green(backtick(new_inputs))))} instead."),
-              wrap = TRUE, call = error_call)
-  }
-
-  exist_idx <- input %in% elements
-  miss_element <- input[!exist_idx]
-  if (length(miss_element) > 9L) {
-    new_element <- c(miss_element[1:9], "...", miss_element[length(miss_element)])
-  } else {
-    new_element <- miss_element
-  }
-  if (any(!exist_idx)) {
-    cli::cli_abort(c("Input {backtick(deparse(substitute(input)))} must available in the \\
-                {backtick(deparse(substitute(elements)))}.",
-                "x" = "{style_bold(col_red(backtick(new_element)))} element{?s} \\
-                {?is\are} not available in {backtick(deparse(substitute(elements)))}.",
-                "i" = "Please select element from {style_italic(col_blue(backtick(new_inputs)))}."), call = error_call)
-  }
-}
-
-#' Validate Column Presence in Data Frame or List
-#'
-#' This function checks whether a specified column exists in a provided data frame, tibble, or list. It provides informative error messages if the input does not meet the expected criteria.
-#'
-#' @param column A character vector representing the name(s) of the column(s) to be checked.
-#' @param df A data frame, tibble, or list in which the presence of the specified column(s) will be tested.
-#'
-#' @return The function does not return a value but throws an error if the column does not exist in the provided data structure.
-#'
-#' @details
-#' - If `df` is not a data frame, tibble, or list, an error is thrown.
-#' - If the `column` argument is empty or the specified column(s) do not exist in `df`, the function provides a detailed error message indicating the issue and suggesting possible corrections.
+#' @return
+#' This function is called for its side effects only. It returns `TRUE` invisibly if validation
+#' succeeds; otherwise it signals an error.
 #'
 #' @examples
-#' df <- data.frame(a = 1:3, b = 4:6, c = 7:9)
-#' test_column("a", df) # No error
-#' \dontrun{
-#' test_column("d", df) # Throws an error: "d" does not exist in `df`
-#' }
-#' @export
-test_column <- function(column, df, error_call = rlang::caller_env()) {
-  if (! (is.data.frame(df) | tibble::is_tibble(df) || is.list(df))) {
-    cli::cli_abort(c("{.arg df} must be a `data.frame` or `tibble` or `list`.",
-                "i" = "Please provide the correct {.arg df}."), call = error_call)
-  }
-  columns <- names(df)
-  if (length(columns) > 9L) {
-    new_columns <- c(columns[1:9], "...", columns[length(columns)])
-  } else {
-    new_columns <- columns
-  }
-  if (length(column) == 0) {
-    cli::cli_abort(c("Input {gsub('_', ' ', deparse(substitute(column)))} must have at least 1 location.",
-                "i" = "Please select column from {style_italic(col_blue(backtick(new_columns)))} \\
-                ,or provide the correct {backtick(deparse(substitute(df)))}."), call = error_call)
-  }
-  # if (length(column) > 1) {
-  #   cli_abort(c(
-  #     "Multiple {backtick(gsub('_', ' ', deparse(substitute(columns))))} are not allowed",
-  #     "x" = "You have provided {backtick(gsub('_', ' ', deparse(substitute(columns))))} {style_bold(col_red(backtick(column)))}.",
-  #     "i" = "Please choose either {add_or(style_bold(col_green(backtick(column))))} instead."
-  #   ))
-  # }
-  #
-  exist_idx <- column %in% columns
-  miss_col <- column[!exist_idx]
-  if (length(miss_col) > 9L) {
-    new_column <- c(miss_col[1:9], "...", miss_col[length(miss_col)])
-  } else {
-    new_column <- miss_col
-  }
-  if (any(!exist_idx)) {
-    cli::cli_abort(c("Input {.arg column} must available in the {backtick(deparse(substitute(df)))}.",
-                "x" = "{style_bold(col_red(backtick(new_column)))} column{?s} \\
-                {?is\are} not available in {backtick(deparse(substitute(df)))}.",
-                "i" = "Please select column from {style_italic(col_blue(backtick(new_columns)))} \\
-                ,or provide the correct {backtick(deparse(substitute(df)))}."), call = error_call)
-  }
-}
-
-#' Validate Data Structure for ToxAssay
-#'
-#' This function checks whether the provided data structure is a valid `ToxAssay` object or a list with the correct format.
-#' It ensures that the input is either a `ToxAssay` object or a list of length 5, containing the elements `group`, `compound`, `dose`, `time`, and `replication`.
-#'
-#' @param expr_str An object to be validated. It should be either an object of class `ToxAssay` or a list.
-#'
-#' @return If the input is valid, the function returns `TRUE`. If the input is invalid, an error message is triggered.
-#'
-#' @examples
-#' # Example of a valid ToxAssay object or list
-#' valid_list <- list(group = "A", compound = "Methimazole", dose = "High", time = "24h", replication = 3)
+#' # Example of a valid list structure
+#' valid_list <- list(
+#'   group = "A",
+#'   compound = "Methimazole",
+#'   dose = "High",
+#'   time = "24h",
+#'   replication = 3)
 #' test_datastr(valid_list)
 #'
-#' # Example of an invalid list (less than 5 elements)
-#' invalid_list <- list(group = "A", compound = "Methimazole")
-#' # This will trigger an error
 #' \dontrun{
+#' # Invalid list (incorrect length)
+#' invalid_list <- list(group = "A", compound = "Methimazole")
 #' test_datastr(invalid_list)
 #' }
+#'
 #' @export
 test_datastr <- function(expr_str, error_call = rlang::caller_env()) {
-  if (!is.list(expr_str) & !inherits(expr_str, "ToxAssay")) {
-    cli::cli_abort(c("{.var expr_str} must be object of class `ToxAssay` or `list`.",
+  if (!is.list(expr_str) & !inherits(expr_str, "toxassay")) {
+    cli::cli_abort(c("{.var expr_str} must be object of class `toxassay` or `list`.",
                 "x" = "The class {style_bold(col_cyan(backtick(class(expr_str))))} of \\
                 {.var expr_str} is not supported.",
                 "i" = "Please provide {.var expr_str} as a list of size 5
@@ -335,127 +421,34 @@ test_datastr <- function(expr_str, error_call = rlang::caller_env()) {
   }
 }
 
-
-
-
-
-
-
-
-
-
-#' Validate Compound Names Against Databases
+#' Validate metadata for toxicogenomics datasets
 #'
-#' This function checks whether the provided compound names exist in the specified database
-#' (TG-GATEs or DrugMatrix) and validates additional parameters such as species, data type,
-#' tissue, and dose type. If no database is specified, it checks the compounds against both
-#' the TG-GATEs and DrugMatrix databases.
+#' @description
+#' `is_metadata()` checks that metadata used for toxicogenomics analyses are complete and internally
+#' consistent. The function validates required columns and enforces that key study descriptors are
+#' unique within a dataset (e.g., a single `database` and a single data type in `fc`). Additional
+#' dataset-specific checks are applied for `tggates` and `drugmatrix`.
 #'
-#' @param compounds A character vector of compound names to be checked.
-#' @param database The name of the database to check against. Should be either `"tggates"` or `"drugmatrix"`. If not specified, both databases are checked.
-#' @param species The species to filter for when using the `"tggates"` database. Should be `"Rat"` or `"Human"`.
-#' @param data_type The type of data to filter for when using the `"tggates"` database. Should be `"in_vivo"` or `"in_vitro"`.
-#' @param tissue The tissue type to filter for. For `"tggates"`, it should be `"Liver"` or `"Kidney"`. For `"drugmatrix"`, it should be `"Liver"`, `"Kidney"`, `"Heart"`, or `"Hepatocytes"`.
-#' @param dose_type The dose type to filter for when using the `"tggates"` database. Should be `"Single"` or `"Repeat"`.
-#' @param error_call Environment used to capture errors. Default is `caller_env()`.
+#' @param metadata A data frame containing sample metadata. Must include the columns
+#'   `compound_name`, `dose_level`, `time_level`, `organ_id`, `database`, `arr_design`, and `fc`.
+#'   For `database = "tggates"`, the columns `species`, `test_type`, and `sin_rep_type` are also required.
+#' @param error_call The environment used for error reporting. Default is `rlang::caller_env()`.
 #'
-#' @return Returns `TRUE` if all compound names are valid, otherwise throws an error.
-#'
-#' @examples
-#' # Check if a compound is in the TG-GATEs or DrugMatrix database
-#' is_compound(compounds = c("aspirin", "acetaminophen"), database = "tggates", species = "Rat", data_type = "in_vivo", tissue = "Liver", dose_type = "Single")
-#'\dontrun{
-#' # Check if a compound exists in either the TG-GATEs or DrugMatrix database
-#' is_compound(compounds = c("aspirin", "paracetamol"))
+#' @details
+#' The function performs the following checks:
+#' \itemize{
+#'   \item Required columns are present in `metadata`.
+#'   \item `database` is valid and unique (one of `"tggates"` or `"drugmatrix"`).
+#'   \item `fc` is unique (e.g., only one of `"FC"` or `"normal"`).
+#'   \item For `database = "tggates"`: `species`, `test_type`, `organ_id`, and `sin_rep_type` are each unique.
+#'   \item For `database = "drugmatrix"`: `organ_id` is unique.
 #' }
-#' @export
-is_compound <- function(compounds,
-                        database = rlang::missing_arg(),
-                        species = rlang::missing_arg(),
-                        data_type = rlang::missing_arg(),
-                        tissue = rlang::missing_arg(),
-                        dose_type = rlang::missing_arg(),
-                        error_call = rlang::caller_env()) {
-
-  if (rlang::is_empty(compounds)) {
-    cli::cli_abort(c("{.var comp_name} must be non-empty.",
-                "i" = "You have supplied an empty vector, please provide compound(s) name instred.")
-              , call = error_call)
-  }
-  if (rlang::is_missing(database)) {
-    comp_tg <- compounds_tggates
-    comp_dm <- dm_metadata
-    available_com <- unique(c(comp_tg$compound_name, comp_dm$Compound))
-    comp_is <- compounds %in% comp_tg$compound_name
-    if (any(!comp_is)) {
-      avail_tgp <- rlang::englue("tggates_compounds()")
-      avail_dm <- rlang::englue("dm_compounds()")
-      cli::cli_abort(c("Invalid compound name.",
-                  "x" = "{style_bold(col_red(backtick(compounds[!comp_is])))} compound{?s} \\
-                {?is/are} not available in open TG-GATEs and DrugMatrix database.",
-                  "i" = "Please find the name of available compound by calling the function \\
-                {style_italic(col_blue(backtick(avail_tgp)))} for TG-GATEs and \\
-                {style_italic(col_blue(backtick(avail_dm)))} for DrugMatrix database.")
-                , call = error_call)
-    }
-  } else {
-    test_input(database, c("tggates", "drugmatrix"))
-    if (identical(database, "tggates")) {
-      test_input(species, c("Rat", "Human"))
-      test_input(data_type, c("in_vivo", "in_vitro"))
-      test_input(tissue, c("Liver", "Kidney"))
-      test_input(dose_type, c("Single", "Repeat"))
-      comp_tggates <- tggates_compounds(species = species,
-                                        data_type = data_type,
-                                        tissue = tissue,
-                                        dose_type = dose_type)
-      comp_is <- compounds %in% comp_tggates
-      if (any(!comp_is)) {
-        avail_com <- rlang::englue("tggates_compounds()")
-        cli::cli_abort(c("Compound must available in open TG-GATEs database.",
-                    "x" = "{style_bold(col_red(backtick(compounds[!comp_is])))} compound name{?s} \\
-                {?is/are} not available in open TG-GATEs database.",
-                    "i" = "Please find the name of available compound by calling the function {style_italic(col_blue(backtick(avail_com)))}.")
-                  , call = error_call)
-      }
-    } else if (identical(database, "drugmatrix")) {
-      test_input(tissue, c("Liver", "Kidney", "Heart", "Hepatocytes"))
-      comp_dm <- drugmatrix_compounds(tissue = tissue)
-      comp_is <- compounds %in% comp_dm
-      if (any(!comp_is)) {
-        avail_com <- rlang::englue(" drugmatrix_compounds()")
-        cli::cli_abort(c("Compound must available in DrugMatrix database.",
-                    "x" = "{style_bold(col_red(backtick(compounds[!comp_is])))} compound name{?s} \\
-                {?is/are} not available in DrugMatrix database.",
-                    "i" = "Please find the name of available compound by calling the function {style_italic(col_blue(backtick(avail_com)))}.")
-                  , call = error_call)
-      }
-    }
-  }
-}
-
-#' Validate Metadata for Toxicogenomics Datasets
 #'
-#' This function checks the integrity and consistency of metadata provided for toxicology datasets,
-#' specifically for `tggates` and `drugmatrix` databases. It ensures that the metadata contains
-#' the necessary columns, and that certain attributes (e.g., `database`, `fc`, `species`, `tissue`)
-#' are consistent within the dataset.
-#'
-#' @param metadata A data frame containing metadata for the toxicogenomics dataset.
-#'  The metadata must include specific columns such as `compound_name`, `dose_level`, `time_level`, `organ_id`, `database`, `arr_design`, and `fc`.
-#'
-#' @details The function performs the following checks:
-#' - Ensures that the metadata contains required columns.
-#' - Verifies that only one `database` (either `tggates` or `drugmatrix`) is present in the metadata.
-#' - Checks that the `fc` (fold change) data type is consistent (i.e., only `FC` or `normal` data).
-#' - For `tggates` database: Ensures metadata consistency for `species`, `test_type`, `organ_id`, and `sin_rep_type`.
-#' - For `drugmatrix` database: Ensures metadata consistency for `organ_id`.
-#'
-#'
-#' @return This function does not return a value. It is used for validation purposes and will raise an error if the metadata is inconsistent.
+#' @return
+#' This function is called for its side effects only. It returns `NULL` invisibly if validation
+#' succeeds; otherwise it signals an error.
 #'
 #' @examples
-#' # Example usage:
 #' metadata <- data.frame(
 #'   compound_name = c("Compound A", "Compound B"),
 #'   dose_level = c("High", "Low"),
@@ -463,12 +456,34 @@ is_compound <- function(compounds,
 #'   organ_id = "Liver",
 #'   database = "drugmatrix",
 #'   arr_design = c("Design1", "Design2"),
-#'   fc = "FC"
-#' )
-#' is_metadata(metadata)
+#'   fc = "FC")
+#' test_metadata(metadata)
+#' \dontrun{
+#' # Invalid: multiple databases present
+#' metadata_bad_db <- data.frame(
+#' compound_name = c("Compound A", "Compound B"),
+#' dose_level = c("High", "Low"),
+#' time_level = c("24h", "48h"),
+#' organ_id = c("Liver", "Kidney"),
+#' database = c("drugmatrix", "tggates"),
+#' arr_design = c("Design1", "Design2"),
+#' fc = "FC")
+#' test_metadata(metadata_bad_db)
+#'
+#' # Invalid: mixed FC and normal data
+#' metadata_bad_fc <- data.frame(
+#' compound_name = c("Compound A", "Compound B"),
+#' dose_level = c("High", "Low"),
+#' time_level = c("24h", "48h"),
+#' organ_id = "Liver",
+#' database = "drugmatrix",
+#' arr_design = c("Design1", "Design2"),
+#' fc = c("FC", "normal"))
+#' test_metadata(metadata_bad_fc)
+#' }
 #'
 #' @export
-is_metadata <- function(metadata, error_call = rlang::caller_env()) {
+test_metadata <- function(metadata, error_call = rlang::caller_env()) {
   test_column(c("compound_name", "dose_level", "time_level", "organ_id", "database", "arr_design","fc"), metadata)
   database <- unique(metadata$database)
   test_input(database, c("tggates", "drugmatrix"))
