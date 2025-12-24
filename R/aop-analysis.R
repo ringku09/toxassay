@@ -165,11 +165,6 @@ get_aops <- function(transaction,
                      min_confidence = 0.5,
                      ci_metric = "lift",
                      error_call = caller_env()) {
-  if (!all(requireNamespace("arules", quietly = TRUE))) {
-    cli::cli_abort(c("Packages `arules` required for AOP!",
-                "i" = "Please install `arules`."),
-              call = error_call)
-  }
   transaction[transaction == 0] <- NA
   transaction <- as.data.frame(transaction) %>%
     dplyr::mutate(dplyr::across(tidyselect::everything(), factor))
@@ -181,9 +176,10 @@ get_aops <- function(transaction,
                                             confidence = min_confidence,
                                             minlen = 2,
                                             maxlen = 2)))
-  rules_ap <- arules::subset(rules, subset = lhs %in% gene_items &
-                               lift > 1 &
-                               rhs %in% dise_items)
+  rules_ap <- arules::subset(rules,
+    subset = arules::`%in%`(lhs, gene_items) &
+             lift > 1 &
+             arules::`%in%`(rhs, dise_items))
   ci <- stats::confint(rules_ap, ci_metric,  smoothCounts = 0.5, transactions = bin_trans)
   arules::quality(rules_ap) <- cbind(
     arules::quality(rules_ap),
