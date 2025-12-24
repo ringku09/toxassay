@@ -1,26 +1,42 @@
-#' F-test for comparing group means in hierarchical data
+#' F-test for comparing group means in hierarchical expression data
 #'
-#' The `hlm()` function models gene expression data utilizing the hierarchical linear
-#' model (HLM).
+#' @description
+#' `fh()` performs an F-test for differences in group means using a hierarchical linear model (HLM)
+#' representation of the experimental design. Given an expression matrix `Y` and quadratic matrices
+#' `A` and `B` derived from the study structure, the function computes an F-statistic for each row
+#' (e.g., probe/gene) and returns the corresponding p-values.
 #'
-#' @param Y Gene expression data matrix, probes in row and samples in column.
-#' @param A quadratic matrix A.
-#' @param B quadratic matrix B.
-#' @param a Number of compound groups.
-#' @param p Number of possible cluster in the data.
-#' @param n Total number of samples in the data.
+#' @param Y Gene expression data matrix with `probes` in rows and samples in columns.
+#' @param A Quadratic matrix A (typically from `get_matrix()`).
+#' @param B Quadratic matrix B (typically from `get_matrix()`).
+#' @param a Integer specifying the number of compound groups. This value can be obtained
+#'   from the output of `data_str()` (i.e., `data_str(...)[[1]]`).
+#' @param p Integer specifying the number of clusters in the experiment (model degrees-of-freedom component). This value
+#'   can be obtained from `data_str()` (e.g., `sum(data_str(...)[[4]])`).
+#' @param n Integer specifying the total number of samples in the experiment. This value
+#'   can be obtained from `data_str()` (e.g., `sum(data_str(...)[[5]])`).
+#' @param error_call The environment used for error reporting. Default is `rlang::caller_env()`.
 #'
-#' @return
-#' A vector of p-values with a size equal to the number of rows in **Y**.
-#' @export
+#' @return A named numeric vector of p-values, one per row of `Y`.
 #'
 #' @examples
-#' sim_data <- simulate_tgxdata(n_de = 10, n_ee = 10, n_com = c(5,5))
+#' sim_data <- simulate_tgxdata(n_de = 10, n_ee = 10, n_com = c(5, 5))
 #' gr <- list(A = paste0("Compound", 1:5), B = paste0("Compound", 6:10))
 #' sim_str <- data_str(gr, metadata = sim_data$metadata)
 #' summary_mat <- get_matrix(sim_str)
-#' hlm(Y = sim_data$expression, A = summary_mat$A, B =summary_mat$B, a = sim_str[[1]], p = sum(sim_str[[4]]), n = sum(sim_str[[5]]))
-hlm <- function(Y, A, B, a, p, n, error_call = rlang::caller_env()) {
+#' fh(Y = sim_data$expression,
+#'    A = summary_mat$A,
+#'    B = summary_mat$B,
+#'    a = sim_str[[1]],
+#'    p = sum(sim_str[[4]]),
+#'    n = sum(sim_str[[5]]))
+#'
+#' @seealso
+#' [data_str()] for deriving `a`, `p`, and `n`,
+#' [get_matrix()] for constructing quadratic matrices `A` and `B`.
+#'
+#' @export
+fh <- function(Y, A, B, a, p, n, error_call = rlang::caller_env()) {
   if (!(inherits(Y, "matrix"))) {
     cli::cli_abort(c("The {.arg Y} must be a matrix.",
              "i" = "Please make {.arg Y} as matrix."), call = error_call)
@@ -42,66 +58,68 @@ hlm <- function(Y, A, B, a, p, n, error_call = rlang::caller_env()) {
   return(pval)
 }
 
-#' Differentially expressed genes identification using F-test in HLM
+#' Identify differentially expressed genes using an HLM F-test
 #'
-#' The `de_genes()` function identify differentially expressed genes between groups using the HLM.
+#' @description
+#' `de_genes()` detects differentially expressed (DE) genes between two or more compound groups
+#' using an F-test derived from a hierarchical linear model (HLM). The experimental design is
+#' inferred from `metadata`, and the required quadratic and summary matrices are constructed from
+#' the design structure. Genes are classified as `"DE"` when their (optionally adjusted) p-values
+#' are less than or equal to `p_cutoff`; otherwise they are classified as `"EE"`.
 #'
-#' `de_genes()` identifies genes that exhibit statistically significant differential
-#' expression across two or more query compound groups. A gene is deemed statistically
-#' significant if the *p-value* is significant in HLM.
+#' @param ... Compound groups supplied as vectors or as a single list (see `test_group()`), defining
+#'   the groups to be compared.
+#' @param ge_matrix Gene expression matrix with `probes` in rows and samples (barcodes) in columns.
+#' @param metadata A data frame or tibble of sample metadata corresponding to columns of `ge_matrix`.
+#'   Must include `barcode`, `compound_name`, `dose_level`, and `time_level` (see `test_data()`).
+#' @param p_cutoff Numeric p-value cutoff used to classify probes/genes as `"DE"` versus `"EE"`.
+#'   Default is `0.05`.
+#' @param p_adjust Character string specifying the p-value adjustment method passed to
+#'   [stats::p.adjust()]. Default is `"none"`.
+#' @param gr_diff Logical indicating whether to include group-level mean expression columns in the
+#'   output. Default is `TRUE`.
+#' @param error_call The environment used for error reporting. Default is `caller_env()`.
 #'
-#' @param gr_diff Show the column(s) for group mean differences. The default is `FALSE`.
-#' @param p_adjust Adjusted `p-values` using Bonferroni methods. default is `TRUE`.
-#' @param p_cutoff P-value cutoff threshold.
-#' @inheritParams expand_data
-#'
-#' @return
-#' An object of `data.frame` or `tibble` about genes table.
-#' @export
+#' @return A tibble with at least the columns:
+#' \itemize{
+#'   \item `probe_id`: probe/gene identifier (row names of `ge_matrix`)
+#'   \item `p_value`: (adjusted) p-value from the HLM F-test
+#'   \item `sig_type`: `"DE"` if `p_value <= p_cutoff`, otherwise `"EE"`
+#' }
+#' If `gr_diff = TRUE`, additional columns are included giving the estimated group-level mean
+#' expression for each group.
 #'
 #' @examples
-#' sim_data <- simulate_tgxdata(n_de = 10, n_ee = 10, n_com = c(5,5))
+#' sim_data <- simulate_tgxdata(n_de = 10, n_ee = 10, n_com = c(5, 5))
 #' gr <- list(A = paste0("Compound", 1:5), B = paste0("Compound", 6:10))
 #' de_genes(gr, ge_matrix = sim_data$expression, metadata = sim_data$metadata)
+#'
+#' @seealso
+#' [stats::p.adjust()] for p-value adjustment methods.
+#'
+#' @export
 de_genes <- function(...,
                      ge_matrix,
                      metadata,
                      p_cutoff = 0.05,
                      p_adjust = "none",
-                     gr_diff = FALSE,
-                     multicore = FALSE,
-                     store = FALSE,
-                     output_dir = missing_arg(),
+                     gr_diff = TRUE,
                      error_call = caller_env()) {
   test_data(ge_matrix, metadata)
   com_group <- test_group(...)
-  output_dir <- destination(output_dir)
-  compounds <- as.vector(unlist(com_group))
-    ck_data <- update_data(
-      compounds,
-      ge_matrix = ge_matrix,
-      metadata = metadata,
-      multicore = multicore,
-      store = store,
-      output_dir = output_dir,
-      error_call = error_call
-    )
-    ge_matrix <- ck_data$expression
-    metadata <- ck_data$metadata
-# ekhane eddit korte hobe, kintu ki seta mone nai
   lev_str <- data_str(com_group, metadata = metadata, error_call = error_call)
   a <- lev_str[[1]]
   p <- sum(lev_str[[4]])
   n <-  sum(lev_str[[5]])
   quadmat <- get_matrix(lev_str)
-  pval <- hlm(Y = ge_matrix, A = quadmat$A, B = quadmat$B, a = a, p = p, n = n)
-  pvalues <- p.adjust(pval, method = p_adjust)
+  pval <- fh(Y = ge_matrix, A = quadmat$A, B = quadmat$B, a = a, p = p, n = n)
+  pvalues <- stats::p.adjust(pval, method = p_adjust)
   sig_probe <- pvalues <= p_cutoff
   sig_exp <- signif(pvalues, digits = 3)
   sig_df <- tibble::tibble(probe_id = names(sig_exp), p_value = sig_exp) %>%
     dplyr::mutate(sig_type = ifelse(sig_probe,"DE", "EE"))
   if (gr_diff) {
-    avg_gfc <- ge_matrix %**% quadmat$group_mat
+    avg_gfc <- ge_matrix %*% quadmat$group_mat
     colnames(avg_gfc) <- names(com_group)
     rownames(avg_gfc) <- rownames(ge_matrix)
     sig_df <- col_diff(avg_gfc) %>%
@@ -112,50 +130,64 @@ de_genes <- function(...,
   return(sig_df)
 }
 
-#' Identification of causal differentially expressed genes
+#' Identify outlier-free reduced differentially expressed genes
 #'
-#' The function `tgx_genes()` is used to find final gene set using Leave One Out Compound (LOOC) method.
-#' Genes misrepresented by a single compound were removed using Leave One Out Compound (LOOC) method.
-#' In LOOC process, each compound is removed from the experiment and find differentially expressed (DE)
-#' genes for every LOO. The final gene set is therefore the intersection of the LOOC genes. Genes which
-#' are co-regulated by a specific compound then filter out in LOOC process.
+#' @description
+#' `tox_degs()` identifies an outlier-robust set of differentially expressed genes (DEGs)
+#' by applying a leave-\eqn{(m-1)}-out cross-validation framework across compounds. Let \eqn{C} be
+#' the set of all compounds, partitioned into \eqn{a} groups, where group \eqn{i} contains \eqn{m_i}
+#' compounds, i.e., \eqn{C = \cup_{i=1}^{a} C_i}. First, DEGs are identified from the full dataset
+#' using the proposed HLM F-test (see `de_genes()`), yielding an initial set \eqn{G}. Because \eqn{G}
+#' may include genes driven by chemical-specific outlying expression, the function constructs
+#' multiple reduced DEG sets by leaving out \eqn{(m_i-1)} compounds at a time within the relevant
+#' group-wise structure.
+#'
+#' Specifically, the function generates \eqn{M} DEG sets \eqn{G_k} by recomputing DEGs using a reduced
+#' compound set \eqn{C_k = C \setminus \{c_{-k}\}} (for \eqn{k = 1, \dots, M}), where each reduced set
+#' excludes a different subset of compounds (equivalently, retains a different held-in compound).
+#' The final outlier-free reduced DEG set is defined as the intersection:
+#' \deqn{G^\* = \cap_{k=1}^{M} G_k.}
+#' Genes significant in the full model but not retained in \eqn{G^\*} are flagged as compound-driven.
 #'
 #' @inheritParams de_genes
+#' @param log10p Logical indicating whether to add a `log10p` column computed as `-log10(p_value)`.
+#'   Default is `TRUE`.
 #'
 #' @return
-#' A data frame of gene identification result.
-#' @export
+#' A tibble (classed as `"toxassay"`) containing results from the full HLM analysis together with
+#' cross-validation filtering. The output includes the following key columns:
+#' \itemize{
+#'   \item `probe_id` and, when available, gene annotations (e.g., `gene_symbol`, `entrez_id`, `gene_name`)
+#'   \item `p_value` (optionally adjusted using `p_adjust`)
+#'   \item `sig_type`, where:
+#'     \itemize{
+#'       \item `"DE"` indicates genes retained in the outlier-free reduced set \eqn{G^\*}
+#'       \item `"EE"` indicates non-significant genes
+#'       \item `"CE"` indicates genes significant in the full model but not retained in \eqn{G^\*}
+#'     }
+#'   \item `log10p` if `log10p = TRUE`
+#' }
 #'
 #' @examples
-#' sim_data <- simulate_tgxdata(n_de = 10, n_ee = 10, n_com = c(5,5))
+#' sim_data <- simulate_tgxdata(n_de = 10, n_ee = 10, n_com = c(5, 5))
 #' gr <- list(A = paste0("Compound", 1:5), B = paste0("Compound", 6:10))
-#' tgx_degs(gr, ge_matrix = sim_data$expression, metadata = sim_data$metadata)
-tgx_degs <- function(...,
+#' tox_degs(gr, ge_matrix = sim_data$expression, metadata = sim_data$metadata)
+#'
+#' @seealso
+#' [de_genes()] for the underlying HLM F-test used to identify DEGs.
+#'
+#' @export
+tox_degs <- function(...,
                       ge_matrix,
                       metadata,
                       p_cutoff = 0.05,
                       p_adjust = "none",
-                      gr_diff = FALSE,
-                      log10p = FALSE,
-                      multicore = FALSE,
-                      store = FALSE,
-                      output_dir = rlang::missing_arg(),
+                      gr_diff = TRUE,
+                      log10p = TRUE,
                       error_call = rlang::caller_env()) {
   comps_group <- test_group(...)
   test_data(ge_matrix, metadata)
-  output_dir <- destination(output_dir)
   compounds <- as.vector(unlist(comps_group))
-  check_data <- update_data(
-    compounds,
-    ge_matrix = ge_matrix,
-    metadata = metadata,
-    multicore = multicore,
-    store = store,
-    output_dir = output_dir,
-    error_call = error_call
-  )
-  ge_matrix <- check_data$expression
-  metadata <- check_data$metadata
   full_model <- de_genes(
     comps_group,
     ge_matrix = ge_matrix,
@@ -163,9 +195,6 @@ tgx_degs <- function(...,
     p_cutoff = p_cutoff,
     p_adjust = p_adjust,
     gr_diff = gr_diff,
-    multicore = multicore,
-    store = FALSE,
-    output_dir = output_dir,
     error_call = error_call
   )
   if ("arr_design" %in% names(metadata)) {
@@ -176,11 +205,11 @@ tgx_degs <- function(...,
       organism = "human"
     }
     all_genes <- probes2genes(full_model$probe_id, organism)
-    hlm_tab <- full_model[match(all_genes$PROBEID, full_model$probe_id), ]
+    hlm_tab <- full_model[match(all_genes$probe_id, full_model$probe_id), ]
     hlm_df <- hlm_tab %>%
-      dplyr::mutate(entrez_id = all_genes$ENTREZID,
-                    gene_symbol = all_genes$SYMBOL,
-                    gene_name = all_genes$GENENAME,
+      dplyr::mutate(entrez_id = all_genes$entrez_id,
+                    gene_symbol = all_genes$gene_symbol,
+                    gene_name = all_genes$gene_name,
                     .after = 1)
   } else {
     hlm_df <- full_model %>%
@@ -206,9 +235,6 @@ tgx_degs <- function(...,
       p_cutoff = p_cutoff,
       p_adjust = p_adjust,
       gr_diff = FALSE,
-      multicore = FALSE,
-      store = FALSE,
-      output_dir = output_dir,
       error_call = error_call
     )
     loo_probes[[i]] <- loo_model$probe_id[loo_model$sig_type == "DE"]
@@ -231,5 +257,5 @@ tgx_degs <- function(...,
       cli::bg_magenta("Total number of unique genes = {unique_genes} ({n_probe} probes)"),
       cli::bg_red("Number of significant genes = {loo_n} (at {'\u03B1'}  = {p_cutoff})")
     ))
-    return(structure(sig_tab, class = c("ToxAssay", "tbl_df", "tbl", "data.frame")))
+    return(structure(sig_tab, class = c("toxassay", "tbl_df", "tbl", "data.frame")))
 }
