@@ -1,121 +1,127 @@
-
-#' Average gene expression in different levels
+#' Compute mean expression at group, compound, dose, and time levels
 #'
 #' @description
+#' `mean_expression()` calculates average gene (or probe) expression at multiple hierarchical
+#' levels of the experimental design: group, compound, dose, and time. The function derives the
+#' study structure from `metadata` and uses summary matrices (from `get_matrix()`) to compute
+#' level-wise means by matrix multiplication.
 #'
-#' The function `mean_expression()` is used to get average gene expression value in `group`,
-#' `compound`, `dose` and `time` levels.
+#' @param ... Compound groups supplied as vectors or as a single list (see `test_group()`), defining
+#'   the grouping of compounds used to compute group-level means.
+#' @param ge_matrix Gene expression matrix with `probes` in rows and samples (barcodes) in columns.
+#' @param metadata A data frame or tibble of sample metadata corresponding to columns of `ge_matrix`.
+#'   Must include `barcode`, `compound_name`, `dose_level`, and `time_level`.
+#' @param probes Optional vector of probe/gene identifiers to subset `ge_matrix` prior to computing
+#'   means. If `NULL` (default), all rows are used.
+#' @param error_call The environment used for error reporting. Default is `caller_env()`.
 #'
-#' @inheritParams update_data
-#'
-#' @return
-#' A list of average data
-#' @export
+#' @return A named list with four matrices:
+#' \itemize{
+#'   \item `group_data`: mean expression at the group level (columns correspond to groups in `...`)
+#'   \item `compound_data`: mean expression at the compound level
+#'   \item `dose_data`: mean expression at the compound-dose level
+#'   \item `time_data`: mean expression at the compound-dose-time level
+#' }
+#' Rows correspond to probes/genes (rows of `ge_matrix`), and columns correspond to the relevant
+#' level-specific labels.
 #'
 #' @examples
-#' sim_data <- simulate_tgxdata(n_de = 10, n_ee = 10, n_com = c(5,5))
+#' sim_data <- simulate_tgxdata(n_de = 10, n_ee = 10, n_com = c(5, 5))
 #' gr <- list(A = paste0("Compound", 1:5), B = paste0("Compound", 6:10))
 #' avg_expr <- mean_expression(gr, ge_matrix = sim_data$expression, metadata = sim_data$metadata)
+#'
+#' @seealso
+#' [data_str()] and [get_matrix()] for constructing the design summary matrices used internally.
+#'
+#' @export
 mean_expression <- function(...,
                             ge_matrix,
                             metadata,
                             probes = NULL,
-                            multicore = FALSE,
-                            store = FALSE,
-                            output_dir = missing_arg(),
                             error_call = caller_env()) {
   test_data(ge_matrix, metadata)
   comps_gr <- test_group(...)
-  output_dir <- destination(output_dir)
-  compounds <- unlist(comps_gr)
-  ck_data <- update_data(
-    compounds,
-    ge_matrix = ge_matrix,
-    metadata = metadata,
-    probes = probes,
-    multicore = multicore,
-    store = store,
-    output_dir = output_dir,
-    error_call = error_call
-  )
-  ge_matrix <- ck_data$expression
-  comp_dict <- ck_data$metadata
-  lev_str <- data_str(comps_gr, metadata = comp_dict)
+  lev_str <- data_str(comps_gr, metadata = metadata)
   design_mat <- get_matrix(lev_str)
-  y <- ge_matrix # set apply() for multiple genes
-  #  gene <- probes2genes(probe_id, organism = "rat")
+
+  if (is.null(probes)) {
+    y <- ge_matrix
+  } else{
+    true_probes <- probes %in% rownames(ge_matrix)
+    if (any(!true_probes)) {
+      false_probes <- probes[!true_probes]
+      n_false <- length(false_probes)
+      cli::cli_alert_warning(c("Given {.emph {n_false}} probe{?s} ",
+                               "{style_bold(col_red(backtick(false_probes)))} ",
+                               "{?is/are} not found in the gene expression data."),
+                             wrap = TRUE)
+    }
+    y <- ge_matrix[probes[true_probes],]
+  }
   estYi <- y %*% design_mat$group_mat
   colnames(estYi) <- names(comps_gr)
   estYij <- y %*% design_mat$compound_mat
-  colnames(estYij) <- set_names("compound", comp_dict, "compound_name")
+  colnames(estYij) <- set_names("compound", metadata, "compound_name")
   estYijk <- y %*% design_mat$dose_mat
-  colnames(estYijk) <- set_names("compound-dose", comp_dict, "compound_name")
+  colnames(estYijk) <- set_names("compound-dose", metadata, "compound_name")
   estYijkl <- y %*% design_mat$time_mat
-  colnames(estYijkl) <- set_names("compound-dose-time", comp_dict, "compound_name")
-  # group_data <- estYi %>%
-  #   tibble::as_tibble()
-  # compound_data <- estYij %>%
-  #   tibble::as_tibble()
-  # dose_data <- estYijk %>%
-  #   tibble::as_tibble()
-  # time_data <- estYijkl %>%
-  #   tibble::as_tibble()
+  colnames(estYijkl) <- set_names("compound-dose-time", metadata, "compound_name")
   return(list(group_data = estYi,
               compound_data = estYij,
               dose_data = estYijk,
               time_data = estYijkl))
 }
 
-#' Average gene expression in different levels
+#' Extract mean expression for a single probe across design levels
 #'
 #' @description
+#' `get_avgFC()` extracts the mean expression profile of a single probe (or gene) across the
+#' hierarchical levels of the experiment defined in `metadata`. It summarizes expression at the
+#' group, compound, compound-dose, and compound-dose-time levels (via `mean_expression()`), and
+#' also returns the per-sample expression values for the same probe.
 #'
-#' The function `get_avgFC()` is used to get average gene expression value in `group`,
-#' `compound`, `dose` and `time` stages.
+#' @param ... Compound groups supplied as vectors or as a single list (see `test_group()`), defining
+#'   the grouping of compounds used to compute group-level means.
+#' @param ge_matrix Gene expression matrix with `probes` in rows and samples (barcodes) in columns.
+#' @param metadata A data frame or tibble of sample metadata corresponding to columns of `ge_matrix`.
+#'   Must include `barcode`, `compound_name`, `dose_level`, and `time_level`.
+#' @param probe_id A single probe/gene identifier. Must match one entry in `rownames(ge_matrix)`.
+#' @param error_call The environment used for error reporting. Default is `caller_env()`.
 #'
-#' @inheritParams update_data
-#' @param probe_id The gene/probe ID.
-#'
-#' @return
-#' A list of average data
-#' @export
+#' @return A named list of tibbles:
+#' \itemize{
+#'   \item `group_df`: mean expression per group (columns: `group`, `avg_x`)
+#'   \item `compound_df`: mean expression per compound (columns: `group`, `compound`, `avg_x`)
+#'   \item `dose_df`: mean expression per compound-dose (columns: `group`, `compound`, `dose`, `avg_x`)
+#'   \item `time_df`: mean expression per compound-dose-time (columns: `group`, `compound`, `dose`, `time`, `avg_x`)
+#'   \item `sample_df`: per-sample expression values (columns: `group`, `compound`, `dose`, `time`, `avg_x`)
+#' }
 #'
 #' @examples
-#' sim_data <- simulate_tgxdata(n_de = 10, n_ee = 10, n_com = c(5,5))
+#' sim_data <- simulate_tgxdata(n_de = 10, n_ee = 10, n_com = c(5, 5))
 #' gr <- list(A = paste0("Compound", 1:5), B = paste0("Compound", 6:10))
-#' avg_value <- get_avgFC(gr, ge_matrix = sim_data$expression, metadata = sim_data$metadata, probe_id = "DE1")
+#' avg_value <- get_avgFC(gr,
+#'                        ge_matrix = sim_data$expression,
+#'                        metadata = sim_data$metadata,
+#'                        probe_id = "DE1")
+#'
+#' @seealso
+#' [mean_expression()] for computing level-wise mean expression matrices used internally.
+#'
+#' @export
 get_avgFC <- function(...,
                       ge_matrix,
                       metadata,
                       probe_id,
-                      multicore = FALSE,
-                      store = FALSE,
-                      output_dir = missing_arg(),
                       error_call = caller_env()) {
   test_data(ge_matrix, metadata)
   test_input(probe_id, rownames(ge_matrix))
   comps_gr <- test_group(...)
-  output_dir <- destination(output_dir)
   compounds <- unlist(comps_gr)
-  ck_data <- update_data(
-    compounds,
-    ge_matrix = ge_matrix,
-    metadata = metadata,
-    probes = NULL,
-    multicore = multicore,
-    store = store,
-    output_dir = output_dir,
-    error_call = error_call
-  )
-  ge_matrix <- ck_data$expression
-  metadata <- ck_data$metadata
   avg_expr <- mean_expression(comps_gr,
                               ge_matrix = ge_matrix,
                               metadata = metadata,
                               probes = probe_id,
-                              multicore = multicore,
-                              store = store,
-                              output_dir = output_dir,
                               error_call = error_call)
 
   gr_tbl <- tibble::tibble(group = factor(names(comps_gr), levels = names(comps_gr)),
@@ -175,45 +181,54 @@ get_avgFC <- function(...,
   ))
 }
 
-
-
-#' Get a subset of gene expression data based on selected parameters
+#' Subset perturbed gene expression data and matching metadata
 #'
 #' @description
+#' `get_subset()` filters a perturbed gene expression matrix (`ge_matrix`) and its corresponding
+#' sample `metadata` using selected dose levels and/or time points. The function also assigns a
+#' `group` label to each sample based on the compound groups provided in `...`.
 #'
-#' This function subsets gene expression data (`ge_matrix`) and metadata (`metadata`) based on selected
-#' dose levels, time points, and other parameters. It performs error handling for incorrect dose
-#' or time inputs and offers options for parallel processing and data storage.
-#'
-#' @inheritParams update_data
-#' @param dose A character vector of dose levels to subset the metadata and expression matrix. If NULL, all dose levels will be used.
-#' @param time A character vector of time points to subset the metadata and expression matrix. If NULL, all time points will be used.
+#' @param ... Compound groups supplied as vectors or as a single list (see `test_group()`), defining
+#'   which compounds belong to each group.
+#' @param ge_matrix Gene expression matrix with `probes` in rows and samples (barcodes) in columns.
+#' @param metadata A data frame or tibble of sample metadata corresponding to columns of `ge_matrix`.
+#'   Must include `barcode`, `compound_name`, `dose_level`, and `time_level`.
+#' @param probes Optional vector of probe/gene identifiers to subset rows of `ge_matrix`. If `NULL`,
+#'   all rows are kept.
+#' @param dose Optional character vector of dose levels used to subset `metadata` and `ge_matrix`.
+#'   If `NULL`, all dose levels are retained.
+#' @param time Optional character vector of time levels used to subset `metadata` and `ge_matrix`.
+#'   If `NULL`, all time levels are retained.
+#' @param error_call The environment used for error reporting. Default is `rlang::caller_env()`.
 #'
 #' @details
-#' The function first checks for valid dose and time levels in the `metadata` and throws an error if
-#' any mismatch is found. It then subsets the gene expression data (`ge_matrix`) and metadata
-#' (`metadata`) based on the specified dose and time levels. Parallel processing is optionally supported via
-#' the `multicore` parameter, and the results can be stored to a specified directory if `store` is TRUE.
+#' The function validates `dose` and `time` against the available levels in `metadata`. It then
+#' subsets `metadata` and retains only the matching columns in `ge_matrix`. A `group` column is
+#' added to the returned `metadata` based on the compound group definitions supplied in `...`.
 #'
-#' @return A list with the following components:
-#' \item{expression}{A matrix of gene expression data that has been subset based on the specified dose and time levels, and optionally the selected probes.}
-#' \item{metadata}{A data frame containing metadata corresponding to the samples in the subsetted expression matrix, including dose, time, and compound information.}
-#'
-#' @export
+#' @return A list with two components:
+#' \itemize{
+#'   \item `expression`: a subset of `ge_matrix` containing the selected samples (and optionally probes)
+#'   \item `metadata`: the corresponding subset of `metadata` with an added `group` column
+#' }
 #'
 #' @examples
 #' sim_data <- simulate_tgxdata()
 #' gr <- list(A = paste0("Compound", 1:5), B = paste0("Compound", 6:10))
-#' sub_data <- get_subset(gr, ge_matrix = sim_data$expression, metadata = sim_data$metadata, probes = paste0("DE", 1:10), dose = "Dose1", time = "Time1")
+#' sub_data <- get_subset(gr,
+#'                        ge_matrix = sim_data$expression,
+#'                        metadata = sim_data$metadata,
+#'                        probes = paste0("DE", 1:10),
+#'                        dose = "Dose1",
+#'                        time = "Time1")
+#'
+#' @export
 get_subset <- function(...,
                        ge_matrix,
                        metadata,
                        probes = NULL,
                        dose = NULL,
                        time = NULL,
-                       multicore = FALSE,
-                       store = FALSE,
-                       output_dir = rlang::missing_arg(),
                        error_call = rlang::caller_env()) {
   if (!is.null(dose) & !all(dose %in% unique(metadata$dose_level))) {
     cli::cli_abort(c("The input dose level is incorrect.",
@@ -229,105 +244,74 @@ get_subset <- function(...,
   }
   test_data(ge_matrix, metadata)
   comps_gr <- test_group(...)
-  output_dir <- destination(output_dir)
   compounds <- unlist(comps_gr)
-  ck_data <- update_data(
-    compounds,
-    ge_matrix = ge_matrix,
-    metadata = metadata,
-    probes = probes,
-    multicore = multicore,
-    store = store,
-    output_dir = output_dir,
-    error_call = error_call
-  )
-  ge_matrix <- ck_data$expression
-  comp_dict <- ck_data$metadata
-  #
-  #   if (is.null(probes)) {
-  #     expr_data <- expr_data
-  #   } else{
-  #     true_probes <- probes %in% rownames(expr_data)
-  #     if (any(!true_probes)) {
-  #       false_probes <- probes[!true_probes]
-  #       n_false <- length(false_probes)
-  #       cli_alert_warning(c("Given {.emph {n_false}} probe{?s} ",
-  #                           "{style_bold(col_red(backtick(false_probes)))} ",
-  #                           "{?is/are} not found in the gene expression data."),
-  #                         wrap = TRUE)
-  #     }
-  #     expr_data <- expr_data[probes[true_probes],]
-  #   }
-  # lev_str <- data_str(comps_gr, metadata = comp_dict)
-  # design_mat <- design_matrix(lev_str)
-
   if (is.null(time)) {
     expr_sp <- ge_matrix
   } else {
-    comp_dict <- comp_dict %>%
+    metadata <- metadata %>%
       dplyr::filter(time_level %in% {{time}})
-    expr_sp <- ge_matrix[, colnames(ge_matrix) %in% comp_dict$barcode]
+    expr_sp <- ge_matrix[, colnames(ge_matrix) %in% metadata$barcode]
   }
   if (is.null(dose)) {
     expr_sp <- expr_sp
   } else {
-    comp_dict <- comp_dict %>%
+    metadata <- metadata %>%
       dplyr::filter(dose_level %in% {{dose}})
-    expr_sp <- expr_sp[, colnames(expr_sp) %in% comp_dict$barcode]
+    expr_sp <- expr_sp[, colnames(expr_sp) %in% metadata$barcode]
   }
-
-  #  For average data
-  # if (identical(space, "dose")) {
-  #   if (average) {
-  #     expr_sp <- Y %*% design_mat$qGama
-  #     #colnames(expr_sp) <- level_names(..., ..., ...)
-  #   }
-  #   dose_dict <- comp_dict %>%
-  #     dplyr::filter(dose_level == "High")
-  #   expr_sp <- Y[, colnames(Y) %in% dose_dict$barcode]
-  #  dim(expr_sp)
-  # }
-  #
-  # if (identical(space, "time")) {
-  #   if (average) {
-  #     expr_sp <- Y %*% design_mat$qDelta
-  #     #colnames(expr_sp) <- level_names(..., ..., ...)
-  #   }
-  #   time_dict <- comp_dict %>%
-  #     dplyr::filter(time_level == "24 hr")
-  #   expr_sp <- Y[, colnames(Y) %in% time_dict$barcode]
-  #   dim(expr_sp)
-  # }
-  tgx_class <- vector(length = nrow(comp_dict))
+  tgx_class <- vector(length = nrow(metadata))
   for(i in 1:length(comps_gr)) {
-    tgx_class[comp_dict$compound_name %in% comps_gr[[i]]] <- names(comps_gr)[i]
+    tgx_class[metadata$compound_name %in% comps_gr[[i]]] <- names(comps_gr)[i]
   }
   tgx_class <- factor(tgx_class, levels = names(comps_gr))
-  comp_dict <- comp_dict %>%
+  metadata <- metadata %>%
     dplyr::mutate(group = tgx_class, .after = barcode)
-  return(list(expression = expr_sp, metadata = comp_dict))
+  return(list(expression = expr_sp, metadata = metadata))
 }
 
 
-#' Compute Mean Expression of Subsets
+
+#' Compute mean expression for compound–dose–time subsets
 #'
-#' This function calculates the mean expression of specific subsets from a gene expression matrix based on metadata criteria such as dose and time.
+#' @description
+#' `mean_subset()` subsets perturbed gene expression data using `dose` and/or `time` (via
+#' `get_subset()`), then averages expression across replicates for each unique
+#' compound–dose–time combination. The resulting expression matrix contains one column per
+#' subset, and the returned metadata records the corresponding design labels and group
+#' membership.
 #'
 #' @inheritParams get_subset
-#' @param names_format A string specifying the format for labeling samples in the output. Defaults to "compound-dose-time".
+#' @param names_format Character string specifying how subset columns are labeled in the output.
+#'   Passed to `set_names()` to construct `sample_id` values (e.g., `"compound-dose-time"`).
+#'   Default is `"compound-dose-time"`.
 #'
-#' @return A list containing two elements:
-#' \item{expression}{A matrix of mean gene expression values for each selected subset.}
-#' \item{metadata}{A dataframe of metadata for the resulting subsets, including sample IDs and group information.}
+#' @return A list with two components:
+#' \itemize{
+#'   \item `expression`: a matrix of mean expression values, with probes/genes in rows and
+#'     averaged subsets in columns (one column per compound–dose–time combination)
+#'   \item `metadata`: a data frame describing the averaged subsets, including `compound_name`,
+#'     `dose_level`, `time_level`, the generated `sample_id`, and the assigned `group`
+#' }
 #'
-#' @details This function first subsets the gene expression matrix based on the selected compounds, dose levels, and time points. It then computes the mean expression for each subset. The output includes both the averaged gene expression matrix and the corresponding metadata for each subset.
-#'
-#' @export
+#' @details
+#' The function groups the subsetted metadata by `compound_name`, `dose_level`, and `time_level`,
+#' collects the corresponding sample barcodes, and computes row means over those samples in
+#' `ge_matrix`. Group labels are assigned from the compound groups provided in `...`.
 #'
 #' @examples
 #' sim_data <- simulate_tgxdata()
 #' gr <- list(A = paste0("Compound", 1:5), B = paste0("Compound", 6:10))
-#' sub_avg <- mean_subset(gr, ge_matrix = sim_data$expression, metadata = sim_data$metadata, probes = paste0("DE", 1:10), dose = "Dose1", time = "Time1")
+#' sub_avg <- mean_subset(gr,
+#'                        ge_matrix = sim_data$expression,
+#'                        metadata = sim_data$metadata,
+#'                        probes = paste0("DE", 1:10),
+#'                        dose = "Dose1",
+#'                        time = "Time1")
+#'
+#' @seealso
+#' [get_subset()] for subsetting samples by dose/time and assigning group labels.
+#'
+#' @export
 mean_subset <- function(...,
                         ge_matrix,
                         metadata,
@@ -335,9 +319,6 @@ mean_subset <- function(...,
                         dose = NULL,
                         time = NULL,
                         names_format = "compound-dose-time",
-                        multicore = FALSE,
-                        store = FALSE,
-                        output_dir = missing_arg(),
                         error_call = caller_env()) {
   comps_gr <- test_group(...)
   space_data <- get_subset(comps_gr,
@@ -346,12 +327,9 @@ mean_subset <- function(...,
                            probes = probes,
                            dose = dose,
                            time = time,
-                           multicore = multicore,
-                           store = store,
-                           output_dir = output_dir,
                            error_call = error_call)
   space_nest <- space_data$metadata %>%
-    dplyr::group_by(compound_name, dose_level,time_level) %>%
+    dplyr::group_by(compound_name, dose_level, time_level) %>%
     tidyr::nest()
   space_barcd <- lapply(space_nest$data, function(x) x$barcode)
   barcd_expr <- lapply(space_barcd, function(x)
@@ -372,4 +350,3 @@ mean_subset <- function(...,
   colnames(space_expr) <- lab
   return(list(expression = space_expr, metadata = space_attr))
 }
-
