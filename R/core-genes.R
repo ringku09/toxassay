@@ -27,12 +27,23 @@
 #'
 #' @examples
 #' \dontrun{
-#'   core_genes <- core_degs(gene_df = res4, path_n = 10, enrich_cutoff = 0.5, category = "kegg", organism = "human", score_threshold = 200, version = "12")
+#' # Example: Get probes for "Insulin signaling pathway" (Rat KEGG ID: 04910)
+#' insulin_probes <- AnnotationDbi::select(rat2302.db::rat2302.db,
+#'                                         keys = "04910",
+#'                                         keytype = "PATH",
+#'                                         columns = c("PROBEID", "SYMBOL"))
+#' # Simulate gene expression data
+#' sim_data <- simulate_data(n_gene = nrow(insulin_probes), n_com = c(5, 5))
+#' gr <- list(A = paste0("Compound", 1:5), B = paste0("Compound", 6:10))
+#' gene_data <- tox_degs(gr, ge_matrix = sim_data$expression, metadata = sim_data$metadata)
+#' gene_data$probe_id <- insulin_probes$PROBEID
+#' gene_data$gene_symbol <- insulin_probes$SYMBOL
+#' key_genes <- core_degs(gene_data)
 #' }
 #'
 #' @export
-core_degs <- function(gene_df = res4,
-                        path_n = NULL,
+core_degs <- function(gene_df,
+                        path_n = 5,
                         enrich_cutoff = 0.25,
                         category = c("go", "kegg", "reactome", "wikipathways"),
                         organism = c("rat", "human"),
@@ -45,17 +56,17 @@ core_degs <- function(gene_df = res4,
                 reactome = "RCTM",
                 wikipathways = "WikiPathways")
   category <- input_db[category]
-  net_fgreedy <- get_netdata(gene_df = gene_df,
+  net_fgreedy <- get_ppinet(gene_df = gene_df,
                              organism = organism,
                              cluster_method = "fastgreedy",
                              score_threshold = score_threshold,
                              version = version)
-  net_walktrap <- get_netdata(gene_df = gene_df,
+  net_walktrap <- get_ppinet(gene_df = gene_df,
                               organism = organism,
                               cluster_method = "walktrap",
                               score_threshold = score_threshold,
                               version = version)
-  net_edgebet <- get_netdata(gene_df = gene_df,
+  net_edgebet <- get_ppinet(gene_df = gene_df,
                              organism = organism,
                              cluster_method = "edge.betweenness",
                              score_threshold = score_threshold,
