@@ -1,65 +1,138 @@
-#' Setup STRING Database
+#' Initialize a STRING database object
 #'
-#' The `setup_stringdb()` function initializes the STRING database for a specified organism and score threshold.
+#' @description
+#' `setup_stringdb()` creates and configures a `STRINGdb` object for retrieving
+#' protein–protein interaction networks from the STRING database for a specified
+#' organism. The function allows control over the STRING version, interaction
+#' score threshold, and local storage location for downloaded data.
 #'
-#' @param organism A character string specifying the sample organism used for the experiment. Options are "human" or "rat". Default is "rat".
-#' @param score_threshold A numeric value specifying the threshold for the combined scores of the interactions. Default is 200.
-#' @param version A character string specifying the version of the STRING database. Default is "11.5".
+#' @param organism Character string specifying the organism of interest.
+#'   Must be one of `"human"` or `"rat"`. Default is `"rat"`.
+#' @param score_threshold Numeric value specifying the minimum combined interaction
+#'   score required to include an edge in the network. Default is `200`.
+#' @param version Character string specifying the STRING database version to use.
+#'   Default is `"12"`.
+#' @param file_path Character string specifying the directory in which STRING data
+#'   files will be stored. If the required files already exist at this location,
+#'   downloading is skipped. If empty or `NULL`, a temporary directory is used.
 #'
-#' @return An object of class `STRINGdb` representing the STRING database for the specified organism.
-#' @export
+#' @details
+#' STRING downloads can be large and may fail on slow connections when the global R
+#' download timeout is low. To reduce download failures, the function temporarily sets
+#' `options(timeout = 300)` when the current timeout is smaller, and restores the
+#' original timeout value on exit.
+#'
+#' @return An object of class `STRINGdb` configured for the specified organism and
+#'   interaction score threshold.
 #'
 #' @examples
 #' \dontrun{
-#' # Setup STRING database for rat with a score threshold of 200
-#' string_db <- setup_stringdb(organism = "rat", score_threshold = 200)
+#' # Initialize the STRING database for rat with a score threshold of 200
+#' string_db <- setup_stringdb(
+#'   organism = "rat",
+#'   score_threshold = 200,
+#'   version = "12")
 #' }
-setup_stringdb <- function(organism = c("human","rat"),
+#'
+#' @seealso
+#' [STRINGdb::STRINGdb] for details on the STRING database interface.
+#'
+#' @export
+setup_stringdb <- function(organism = c("human", "rat"),
                            score_threshold = 200,
-                           version = "12") {
+                           version = "12",
+                           file_path = "") {
   test_input(organism, auto_input = TRUE)
-  if (identical(organism, "human")) {
-    taxa = 9606
+  current_timeout <- getOption("timeout")
+  on.exit(options(timeout = current_timeout), add = TRUE)
+  if (is.null(current_timeout) || current_timeout < 300) {
+    options(timeout = 300)
+    cli::cli_alert_info(
+      "Temporarily increased download `timeout` to {style_bold(col_red(300))} seconds for STRING data retrieval."
+    )
+  }
+  taxa <- if (identical(organism, "human")) {
+    9606
   } else if (identical(organism, "rat")) {
-    taxa = 10116
+    10116
   }
   string_db <- STRINGdb::STRINGdb$new(
     version = version,
     species = taxa,
     network_type = "full",
     score_threshold = score_threshold,
-    input_directory = ""
-    )
+    input_directory = file_path
+  )
   return(string_db)
 }
 
-#' Get network data from STRING database
+
+#' Build a protein–protein interaction network from STRING
 #'
-#' The function `get_netdata()` is used to extract network data from gene table.
+#' @description
+#' `get_ppinet()` maps input gene symbols to STRING identifiers and retrieves the corresponding
+#' protein–protein interaction (PPI) subnetwork from the STRING database. The function returns
+#' edge and vertex tables suitable for downstream network analysis and visualization. It also
+#' computes common node centrality measures and assigns community labels using a selected
+#' clustering algorithm.
 #'
-#' @param gene_df A data frame of gene information or a `tgxtool` class of object.
-#' @param gene_col The name of the column for gene name in `gene_df`.
-#' @param p.value_col The name of the column for p-values in `gene_df`.
-#' @param cluster_method Cluster algorithm to find community. You can choose between "fastgreedy",
-#' "walktrap", "spinglass" and "edge.betweenness" (the default is `NULL`).
-#' @inheritParams setup_stringdb
+#' @param gene_df A data frame containing gene information. Must include a `gene_symbol` column.
+#' @param organism Character string specifying the organism for STRING mapping. One of
+#'   `"human"` or `"rat"`.
+#' @param cluster_method Character string specifying the community detection algorithm used to
+#'   cluster the network. One of `"edge.betweenness"`, `"fastgreedy"`, `"walktrap"`, or
+#'   `"spinglass"`. Default is `"edge.betweenness"` (selected via `test_input(auto_input = TRUE)`).
+#' @param n_percent Numeric value (percentage) used to define the minimum community size. Communities
+#'   with fewer than `ceiling(n_genes * n_percent / 100)` members are merged into `"SN0"`.
+#' @param score_threshold Integer specifying the minimum STRING interaction score passed to
+#'   `setup_stringdb()`.
+#' @param version Character string specifying the STRING database version passed to
+#'   `setup_stringdb()` (e.g., `"12"`).
 #'
-#' @return A list contain two data frames
-#'  1) `vertices`: A data frame of information about nodes.
-#'  2) `edges`: A data frame of information about edges.
-#' @export
+#' @details
+#' The function performs the following steps:
+#' \itemize{
+#'   \item Initializes a STRINGdb object via `setup_stringdb()` using `organism`, `score_threshold`,
+#'     and `version`.
+#'   \item Maps `gene_symbol` to STRING identifiers and removes duplicated STRING IDs.
+#'   \item Retrieves the STRING subnetwork induced by the mapped genes.
+#'   \item Returns network tables (`edges`, `vertices`) and augments vertices with degree,
+#'     betweenness, closeness, and eigenvector centralities.
+#'   \item Detects communities using `cluster_method`; small communities are merged into `"SN0"`.
+#' }
+#'
+#' @return A list with two data frames:
+#' \itemize{
+#'   \item `vertices`: node-level information including `gene_symbol`, `STRING_id`, centrality measures,
+#'     and community annotations (`community`, `gene_class`)
+#'   \item `edges`: edge-level information with mapped `from` and `to` gene symbols
+#' }
 #'
 #' @examples
 #' \dontrun{
+#' # Example: Get probes for "Insulin signaling pathway" (Rat KEGG ID: 04910)
+#' insulin_probes <- AnnotationDbi::select(rat2302.db::rat2302.db,
+#'                                         keys = "04910",
+#'                                         keytype = "PATH",
+#'                                         columns = c("PROBEID", "SYMBOL"))
+#' # Simulate gene expression data
+#' sim_data <- simulate_data(n_gene = nrow(insulin_probes), n_com = c(5, 5))
+#' gr <- list(A = paste0("Compound", 1:5), B = paste0("Compound", 6:10))
+#' gene_data <- tox_degs(gr, ge_matrix = sim_data$expression, metadata = sim_data$metadata)
+#' gene_data$probe_id <- insulin_probes$PROBEID
+#' gene_data$gene_symbol <- insulin_probes$SYMBOL
 #' net_data <- get_ppinet(
 #'   gene_data,
-#'   gene_col = "gene_name",
-#'   p.value_col = "group",
-#'   organism = "rat",
+#'   organism = "human",
 #'   score_threshold = 400,
 #'   cluster_method = "edge.betweenness"
 #' )
 #' }
+#'
+#' @seealso
+#' [setup_stringdb()] for creating the STRINGdb interface used internally.
+#'
+#' @export
 get_ppinet <- function(gene_df,
                         organism = c("human", "rat"),
                         cluster_method = c("edge.betweenness", "fastgreedy", "walktrap", "spinglass"),
@@ -83,7 +156,7 @@ get_ppinet <- function(gene_df,
   deg <- igraph::degree(network)            # Degree centrality
   clo <- igraph::closeness(network)         # Closeness centrality
   bet <- igraph::betweenness(network)       # Betweenness centrality
-  eig <- igraph::evcent(network)$vector     # Eigenvector centrality
+  eig <- igraph::eigen_centrality(network)$vector     # Eigenvector centrality
   net_df$vertices <- net_df$vertices %>%
     dplyr::mutate(
       degree = deg,
@@ -117,33 +190,66 @@ get_ppinet <- function(gene_df,
   return(net_df)
 }
 
-#' Extract hub network data
+#' Extract a hub subnetwork from STRING-derived network data
 #'
-#' The function `get_hubdata()` is used to extract hub network data from full network data.
+#' @description
+#' `get_hubdata()` filters a full network object (as returned by `get_ppinet()`) to retain a
+#' hub subnetwork defined by a user-specified condition on node centrality metrics. Nodes that
+#' satisfy the condition are kept, and the edge table is restricted to interactions where both
+#' endpoints are among the retained hub nodes.
 #'
-#' @param net_data A network data of class `tgxtool`.
-#' @param condition A character string specify the condition of hub network.
-#' (default is `degree >= 20`). There are four metrics `degree`, `betweenness`, `closenes`,
-#'  and `eigenes` can be used in the condition with the five comparison operators `<`, `>`, `<=`,
-#'  `>=`, and `==`. At the end of the condition you must provide appropriate numeric value of metric
-#'  used in the condition.
+#' @param net_data A network object containing `vertices` and `edges` components, as returned by
+#'   `get_ppinet()`. `net_data$vertices` must contain a `gene_symbol` column and centrality metrics.
+#' @param condition Character string specifying a filtering rule applied to `net_data$vertices`.
+#'   The rule must be of the form `<metric><operator><value>` (spaces are allowed but ignored),
+#'   for example `"degree >= 10"`. Valid metrics are `degree`, `betweenness`, `closenes`,
+#'   and `eigenes`. Valid operators are `<`, `>`, `<=`, `>=`, and `==`. The condition must end
+#'   with a numeric threshold. Default is `"degree >= 10"`.
+#' @param error_call The environment used for error reporting. Default is `caller_env()`.
 #'
-#' @return A network data
-#' @export
+#' @details
+#' The function parses `condition` to extract:
+#' \itemize{
+#'   \item a metric name (one of `degree`, `betweenness`, `closenes`, `eigenes`)
+#'   \item a comparison operator (`<`, `>`, `<=`, `>=`, `==`)
+#'   \item a numeric cutoff value
+#' }
+#' The condition is then evaluated on `net_data$vertices`, and only rows meeting the condition
+#' are retained. The edge list is subsequently filtered to keep only edges connecting two retained
+#' hub nodes.
+#'
+#' @return A network object with the same structure as `net_data` (components `vertices` and `edges`),
+#' containing only the hub nodes and their induced subnetwork.
 #'
 #' @examples
 #' \dontrun{
-#' net_data <- get_netdata(
+#' # Example: Get probes for "Insulin signaling pathway" (Rat KEGG ID: 04910)
+#' insulin_probes <- AnnotationDbi::select(rat2302.db::rat2302.db,
+#'                                         keys = "04910",
+#'                                         keytype = "PATH",
+#'                                         columns = c("PROBEID", "SYMBOL"))
+#' # Simulate gene expression data
+#' sim_data <- simulate_data(n_gene = nrow(insulin_probes), n_com = c(5, 5))
+#' gr <- list(A = paste0("Compound", 1:5), B = paste0("Compound", 6:10))
+#' gene_data <- tox_degs(gr, ge_matrix = sim_data$expression, metadata = sim_data$metadata)
+#' gene_data$probe_id <- insulin_probes$PROBEID
+#' gene_data$gene_symbol <- insulin_probes$SYMBOL
+#' net_data <- get_ppinet(
 #'   gene_data,
-#'   gene_col = "gene_name",
-#'   p.value_col = "group",
-#'   organism = "rat",
+#'   organism = "human",
 #'   score_threshold = 400,
 #'   cluster_method = "edge.betweenness"
 #' )
-#' get_hubdata(net_data = net_dt, condition = "degree >= 20")
+#' hub_net <- get_hubdata(net_data = net_data, condition = "degree >= 10")
 #' }
-get_hubdata <- function(net_data, condition = "degree >= 10", error_call = caller_env()) {
+#'
+#' @seealso
+#' [get_ppinet()] for generating the full network with centrality metrics used by `condition`.
+#'
+#' @export
+get_hubdata <- function(net_data,
+                        condition = "degree >= 10",
+                        error_call = caller_env()) {
   test_element(names(net_data), c("vertices", "edges"))
   test_column("gene_symbol", net_data$vertice)
   condition <- gsub(" ", "", condition)
