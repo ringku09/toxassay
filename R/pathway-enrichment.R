@@ -1,38 +1,63 @@
-#' Get Gene Enrichment Results
+#' Retrieve functional enrichment results from STRING
 #'
 #' @description
-#' The `get_enrichment` function enriches a set of genes based on specified categories such as KEGG pathways,
-#' Gene Ontology (GO) biological processes, molecular functions, cellular components, Reactome, and WikiPathways.
-#' It maps the genes to the STRING database, retrieves enrichment results, and processes the results to return a data frame of enriched pathways.
+#' `get_enrichment()` performs functional enrichment analysis for a set of genes using the
+#' STRING database. Gene symbols are mapped to STRING identifiers, enrichment is computed for a
+#' selected annotation category (e.g., KEGG, GO, Reactome, WikiPathways), and the top enriched
+#' terms are returned as a tidy table.
 #'
-#' @param gene_df A data frame containing the gene information with a column named `gene_symbol`.
-#' @param category A character vector specifying the categories for enrichment. Options are "KEGG" (the default), "Process", "Component", "Function", "RCTM", and "WikiPathways".
-#' @param path_n An integer specifying the number of top pathways to return (default is 10).
-#' @param organism A character string specifying the organism. Options are "rat" or "human".
-#' @param score_threshold A numeric value specifying the score threshold for STRING database interactions (default is 200).
-#' @param version A character string specifying the version of the STRING database (default is "12").
+#' @param gene_df A data frame containing gene information. Must include a `gene_symbol` column.
+#' @param category Character string specifying the enrichment category to query in STRING.
+#'   One of `"KEGG"`, `"Process"` (GO Biological Process), `"Component"` (GO Cellular Component),
+#'   `"Function"` (GO Molecular Function), `"RCTM"` (Reactome), or `"WikiPathways"`.
+#'   Default is `"KEGG"` (selected via `test_input(auto_input = TRUE)`).
+#' @param path_n Integer specifying the number of top enriched terms to return. If `NULL`, all
+#'   enriched terms are returned. Default is `10`.
+#' @param organism Character string specifying the organism used for STRING mapping. One of
+#'   `"rat"` or `"human"`.
+#' @param score_threshold Integer specifying the minimum STRING interaction score passed to
+#'   `setup_stringdb()`. Default is `200`.
+#' @param version Character string specifying the STRING database version passed to
+#'   `setup_stringdb()` (e.g., `"12"`). Default is `"12"`.
 #'
-#' @return A tibble containing enriched pathways with columns:
-#' \item{ID}{The term ID of the pathway.}
-#' \item{pathway}{The name of the pathway.}
-#' \item{n_genes}{The number of genes in the pathway.}
-#' \item{p_value}{The p-value of the enrichment.}
-#' \item{fdr}{The false discovery rate of the enrichment.}
-#' \item{genes}{The genes involved in the pathway.}
+#' @details
+#' The function maps `gene_symbol` values to STRING IDs using `setup_stringdb()`. Enrichment
+#' results are retrieved using `STRINGdb::get_enrichment()` for the selected `category`. If `path_n`
+#' is larger than the number of available enriched terms, all terms are returned and a warning is
+#' shown. The returned table includes the term identifiers, descriptions, gene counts, and
+#' enrichment statistics. A comma-separated `genes` column is constructed from STRING's
+#' `preferredNames` field.
 #'
-#' @export
+#' @return A tibble with one row per enriched term and the columns:
+#' \itemize{
+#'   \item `ID`: term identifier (e.g., KEGG/Reactome/WikiPathways/GO term ID)
+#'   \item `pathway`: term description
+#'   \item `n_genes`: number of mapped genes in the term
+#'   \item `p_value`: enrichment p-value
+#'   \item `fdr`: false discovery rate
+#'   \item `genes`: comma-separated gene symbols mapped to the term
+#' }
 #'
 #' @examples
 #' \dontrun{
-#' # Sample gene data frame
-#' gene_df <- data.frame(gene_symbol = c("Gene1", "Gene2", "Gene3"))
-#'
-#' # Get enrichment results using KEGG pathways for humans
-#' enriched_genes <- get_enrichment(gene_df, category = "KEGG", path_n = 5, organism = "human")
-#'
-#' # View the enriched pathways
-#' print(enriched_genes)
+#' # Example: Get probes for "Insulin signaling pathway" (Rat KEGG ID: 04910)
+#' insulin_probes <- AnnotationDbi::select(rat2302.db::rat2302.db,
+#'                                         keys = "04910",
+#'                                         keytype = "PATH",
+#'                                         columns = c("PROBEID", "SYMBOL"))
+#' # Simulate gene expression data
+#' sim_data <- simulate_data(n_gene = nrow(insulin_probes), n_com = c(5, 5))
+#' gr <- list(A = paste0("Compound", 1:5), B = paste0("Compound", 6:10))
+#' gene_data <- tox_degs(gr, ge_matrix = sim_data$expression, metadata = sim_data$metadata)
+#' gene_data$probe_id <- insulin_probes$PROBEID
+#' gene_data$gene_symbol <- insulin_probes$SYMBOL
+#' enriched_genes <- get_enrichment(gene_data)
 #' }
+#'
+#' @seealso
+#' [setup_stringdb()] for initializing the STRING interface used internally.
+#'
+#' @export
 get_enrichment <- function(gene_df,
                            category = c("KEGG", "Process", "Component", "Function", "RCTM", "WikiPathways"),
                            path_n = 10,
@@ -70,40 +95,69 @@ get_enrichment <- function(gene_df,
   return(path_tab)
 }
 
-
-
-#' Generate Enrichment Network Data
+#' Create enrichment network data for pathway–gene visualization
 #'
 #' @description
-#' The `enrichment_netdata` function generates network like data for gene enrichment analysis based on specified categories such as KEGG pathways.
-#' It maps the genes to pathways, calculates weights, and prepares the data for network visualization.
+#' `enrichment_netdata()` converts STRING enrichment results into a bipartite network-like
+#' representation linking enriched terms (e.g., pathways or GO categories) to member genes.
+#' The output is designed for network visualization, with vertex attributes describing
+#' pathways and genes, and edge weights reflecting term/gene connectivity.
 #'
-#' @param gene_df A data frame containing the gene information with a column named `gene_symbol`.
-#' @param category A character string specifying the category for enrichment (default is "KEGG").
-#' @param organism A character string specifying the organism (default is "rat").
-#' @param path_n An integer specifying the number of top pathways to return (default is 10).
-#' @param gene_wtcol A character string specifying the column in `gene_df` to use for gene weights (default is "p_value").
-#' @param score_threshold A numeric value specifying the score threshold for STRING database interactions (default is 200).
-#' @param version A character string specifying the version of the STRING database (default is "12").
+#' @param gene_df A data frame containing gene information. Must include a `gene_symbol` column.
+#' @param category Character string specifying the enrichment category queried in STRING.
+#'   One of `"KEGG"`, `"Process"`, `"Component"`, `"Function"`, `"RCTM"`, or `"WikiPathways"`.
+#' @param organism Character string specifying the organism for STRING mapping. One of `"rat"` or
+#'   `"human"`.
+#' @param path_n Integer specifying the number of top enriched terms to include. If `NULL`, all
+#'   enriched terms are used. Default is `10`.
+#' @param gene_wtcol Column name in `gene_df` used as a gene-level weight when assigning gene node
+#'   sizes (e.g., `"p_value"`). If `NULL`, a constant size is used for all genes. Default is
+#'   `"p_value"`.
+#' @param score_threshold Integer specifying the minimum STRING interaction score passed to
+#'   `setup_stringdb()`. Default is `200`.
+#' @param version Character string specifying the STRING database version passed to
+#'   `setup_stringdb()` (e.g., `"12"`). Default is `"12"`.
 #'
-#' @return A list containing two elements:
-#' \item{vertices}{A tibble containing the vertices of the network with columns: `name`, `count`, `p_value`, `nodes`, and `size`.}
-#' \item{edges}{A tibble containing the edges of the network with columns: `from`, `to`, and `weight`.}
+#' @details
+#' The function first calls `get_enrichment()` to obtain enriched terms and their member genes.
+#' It then constructs:
+#' \itemize{
+#'   \item a pathway vertex table with term size scaled from enrichment p-values
+#'   \item a gene vertex table restricted to genes present in the enrichment results, with size
+#'     optionally scaled from `gene_wtcol`
+#'   \item an edge table connecting each term to its genes
+#' }
+#' Edge weights are computed as `N / (n1 * n2)`, where `N` is the number of gene nodes, `n1` is the
+#' term gene count, and `n2` is the number of terms connected to the gene (gene degree in the
+#' bipartite graph).
 #'
-#' @export
+#' @return A list with two tibbles:
+#' \itemize{
+#'   \item `vertices`: vertex attributes with columns including `name`, `count`, `p_value` (for genes),
+#'     `nodes` (`"pathway"` or `"gene"`), and `size`
+#'   \item `edges`: edge list with columns `from` (term name), `to` (gene symbol), and `weight`
+#' }
 #'
 #' @examples
 #' \dontrun{
-#' # Sample gene data frame
-#' gene_df <- data.frame(gene_symbol = c("Gene1", "Gene2", "Gene3"))
-#'
-#' # Generate enrichment network data for KEGG pathways in rats
-#' net_data <- enrichment_netdata(gene_df, category = "KEGG", organism = "rat")
-#'
-#' # View the vertices and edges of the network
-#' print(net_data$vertices)
-#' print(net_data$edges)
+#' # Example: Get probes for "Insulin signaling pathway" (Rat KEGG ID: 04910)
+#' insulin_probes <- AnnotationDbi::select(rat2302.db::rat2302.db,
+#'                                         keys = "04910",
+#'                                         keytype = "PATH",
+#'                                         columns = c("PROBEID", "SYMBOL"))
+#' # Simulate gene expression data
+#' sim_data <- simulate_data(n_gene = nrow(insulin_probes), n_com = c(5, 5))
+#' gr <- list(A = paste0("Compound", 1:5), B = paste0("Compound", 6:10))
+#' gene_data <- tox_degs(gr, ge_matrix = sim_data$expression, metadata = sim_data$metadata)
+#' gene_data$probe_id <- insulin_probes$PROBEID
+#' gene_data$gene_symbol <- insulin_probes$SYMBOL
+#' enriched_net <- enrichment_netdata(gene_data)
 #' }
+#'
+#' @seealso
+#' [get_enrichment()] for retrieving STRING enrichment results used to build the network.
+#'
+#' @export
 enrichment_netdata <- function(gene_df,
                                category = c("KEGG", "Process", "Component", "Function", "RCTM", "WikiPathways"),
                                organism = c("rat", "human"),
