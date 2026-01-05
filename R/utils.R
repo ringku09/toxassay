@@ -1,23 +1,9 @@
-
-`%**%` <- function(x, y) matrixProd(x, y)
-
-#' Function for matrix of one
-#'
-#' The function `mat_one()` is used to generate a matrix of one.
-#'
-#' @param n Number of rows
-#' @param m Number of columns
-#'
-#' @return A matrix of ones5
-#' @export
-#'
-#' @examples
-#' mat_one(3, 4)
+# Function for matrix of one
 mat_one <- function(n, m) {
   matrix(1, nrow = n, ncol = m)
 }
 
-
+# Function to add 0 before the  single digit number
 add_zero <- function(x) {
   if (nchar(x) == 1) {
     x <- paste0(0, x)
@@ -53,34 +39,6 @@ direct_sum <- function(A, B) {
   return(dir_sum)
 }
 
-# # Set p-value sign based on coordinate
-# plot_pval <- function(label, p_value) {
-#   if (identical(label, "group")) {
-#     p_val <- p_value
-#   } else if (identical(label, "compound")) {
-#     p_val <- p_value
-#   } else if (identical(label, "dose")) {
-#     p_val <- -p_value
-#   } else if (identical(label, "time")) {
-#     p_val <- -p_value
-#   }
-#   return(p_val)
-# }
-
-# # Set log FC sign based on coordinate
-# plot_lfc <- function(label, logFC) {
-#   if (identical(label, "group")) {
-#     lfc <- logFC
-#   } else if (identical(label, "compound")) {
-#     lfc <- -logFC
-#   } else if (identical(label, "dose")) {
-#     lfc <- -logFC
-#   } else if (identical(label, "time")) {
-#     lfc <- logFC
-#   }
-#   return(lfc)
-# }
-
 # Find middle potion of bar plot for group to display text
 gr_barpos <- function(gr_data, var) {
   zz <- gr_data %>%
@@ -113,7 +71,7 @@ df2matrix <- function(df, row_names = NULL) {
   return(df_mat)
 }
 
-# Average fold change
+# Calculate average fold change
 avg_fc <- function(x, y, FC = TRUE) {
   avg_gr <- x %*% y$qAlfa
   if (FC) {
@@ -122,7 +80,7 @@ avg_fc <- function(x, y, FC = TRUE) {
   return(fc)
 }
 
-# destination path creator
+# Destination/ output path creator
 destination <- function(output_dir) {
   if (rlang::is_missing(output_dir)) {
     output_dir <- tempdir()
@@ -170,7 +128,7 @@ col_diff <- function(avg_data) {
 }
 
 
-# with common legend
+# Get common legend data for ggplot
 com_legend <- function(gg_plot) {
   tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(gg_plot))
   leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
@@ -178,7 +136,7 @@ com_legend <- function(gg_plot) {
   return(legend)
 }
 
-# Capitalize first letter
+# Capitalize first letter of string
 block_fst <- function(x) {
   if (is.character(x)) {
     x <- tolower(x)
@@ -188,7 +146,7 @@ block_fst <- function(x) {
 }
 
 
-# compound name to abbreviation
+# Compound name to abbreviation (Only work for TG-GATEs data)
 comp_abbr <- function(comp_name, error_call = caller_env()) {
   if (is_empty(comp_name)) {
     cli::cli_abort(c("{.var comp_name} must be non-empty.",
@@ -260,7 +218,7 @@ comp_abbr <- function(comp_name, error_call = caller_env()) {
   return(abbr)
 }
 
-# abbreviation or combination of abbreviation and compound name to compound name
+# Abbreviation to compound name (Only work for TG-GATEs data)
 abbr2name <- function(comp_abbr, error_call = caller_env()) {
   if (is_empty(comp_abbr)) {
     cli::cli_abort(c("{.var comp_abbr} must be non-empty.",
@@ -301,8 +259,7 @@ abbr2name <- function(comp_abbr, error_call = caller_env()) {
   return(name)
 }
 
-
-# Find data type from attribute data
+# Find data type from metadata (Only work for TG-GATEs data)
 get_dtype <- function(attr_df, error_call = caller_env()) {
   species <- unique(attr_df$species)
   test_type <- unique(attr_df$test_type)
@@ -348,39 +305,7 @@ get_dtype <- function(attr_df, error_call = caller_env()) {
 }
 
 
-
-# select_pcol <- function(pmat, lab = NULL, error_call = caller_env()) {
-#     if (is.null(lab)) {
-#       test_pmat <- pmat
-#     } else {
-#       lab <- gsub(" ", "", lab)
-#       all_lab <- c("group",  "compound", "dose", "time")
-#       unlist_lab <- unlist(strsplit(lab, "[^(A-Za-z)]"))
-#       if (any(unlist_lab %in% "")) {
-#         unlist_lab <- unlist_lab[-which(unlist_lab == "")]
-#       }
-#       if (!all(unlist_lab %in% all_lab)) {
-#         miss_lab <- unlist_lab[!unlist_lab %in% all_lab]
-#         remin_lab <- all_lab[!all_lab %in% unlist_lab]
-#         cli_abort(c("The name of stage used in test level must be a valid stage.",
-#                     "x" = "Input {style_bold(col_red(backtick(miss_lab)))} {?is/are} not a valid stage.",
-#                     "i" = "Please use {style_bold(col_red(backtick(remin_lab)))} instread."),
-#                   call = error_call)
-#       }
-#       join_sym <- unlist(strsplit(gsub("[^[:punct:]S]", "", lab), ""))
-#       if (!all(join_sym %in% "&")) {
-#         wrong_sym <- join_sym[!join_sym %in% "&"]
-#         cli_abort(c("Test level condition contain wrong symbol.",
-#                     "x" = "Input {style_bold(col_red(backtick(wrong_sym)))} {?is/are} not a valid symbol.",
-#                     "i" = "Please use `&` instread."),
-#                   call = error_call)
-#       }
-#       test_pmat <- as.matrix(pmat[, unlist_lab])
-#     }
-#     return(test_pmat)
-#   }
-
-# up-doen regulation calculator
+# Up- and down-regulation calculator for perturbation data
 up_down <- function(...,
                     probes,
                     ge_matrix,
@@ -416,7 +341,7 @@ up_down <- function(...,
   return(updown_df)
 }
 
-
+# Split a string into two equal part
 split_two <- function(sentence) {
   words <- strsplit(sentence, "\\s+")[[1]]
   num_words <- length(words)
@@ -432,6 +357,7 @@ split_two <- function(sentence) {
   return(list(first_half = first_half, second_half = second_half))
 }
 
+# Split a string into parts with predefined no. of characters
 split_sentence <- function(sentence, n_letters) {
   sentence <- as.character(sentence)
   words <- strsplit(sentence, " ")[[1]]
@@ -461,49 +387,21 @@ split_sentence <- function(sentence, n_letters) {
   return(groups)
 }
 
-
-
+# Split and merge string in new lines
 split_merge <- function(sentences, n_letters = 20) {
   split_x <- lapply(sentences, function(x) split_sentence(x, n_letters = n_letters))
   merge_split <- unlist(lapply(split_x, function(x) paste(unlist(x),collapse = "\n")))
   return(merge_split)
 }
 
+# Count number of words in a string
 n_words <- function(sentence) {
   words <- strsplit(sentence, "\\s+")[[1]]
   n_word <- length(words)
   return(n_word)
 }
 
-# split_multiple <- function(sentence, nparts) {
-#   words <- strsplit(sentence, "\\s+")[[1]]
-#   n_char <- sapply(words, nchar)
-#   cum_char <- cumsum(n_char)
-#   for (i in 1:length(cum_char)) {
-#     if(cum_char >= n_letters)
-#   }
-#
-#
-#   num_words <- length(words)
-#
-#   if (num_words < nparts) {
-#     cli_abort(glue::glue("The sentence should contain at least {nparts} words."))
-#   }
-#
-#   words_per_part <- ceiling(num_words / nparts)
-#
-#   sentence_parts <- vector("list", nparts)
-#
-#   for (i in 1:nparts) {
-#     start_idx <- (i - 1) * words_per_part + 1
-#     end_idx <- min(start_idx + words_per_part - 1, num_words)
-#     sentence_parts[[i]] <- paste(words[start_idx:end_idx], collapse = " ")
-#   }
-#
-#   return(sentence_parts)
-# }
-
-
+# Split and merge two equal part of string with new lines
 split2_merge <- function(sentences) {
   split_x <- lapply(sentences, function(x) split_two(x))
   max_char <- max(sapply(unlist(split_x), nchar))
@@ -514,6 +412,7 @@ split2_merge <- function(sentences) {
   return(merge_split)
 }
 
+# Add title tag to the plot
 title_tag <- function(title = NULL, title_size = rel(2), note = NULL,
                       note_size = rel(0.5), tag = NULL, tag_size = rel(1)) {
   if (!is.null(tag)) {
@@ -538,33 +437,28 @@ title_tag <- function(title = NULL, title_size = rel(2), note = NULL,
   }
 }
 
-
-
+# Remove display message used in R console
 rm_msg <- function(cat_msg) {
   cat("\r")
   cat(paste0(rep(" ", nchar(cat_msg)), collapse = ""))
   cat("\r")
 }
 
-
-
+# Find cluster of compounds appear in the compound group
 get_class <- function(comps_gr, compounds) {
   class_assignment <- sapply(compounds, function(element) {
     matched_clusters <- sapply(comps_gr, function(cluster) element %in% cluster)
     match(TRUE, matched_clusters)
   })
-
   return(class_assignment)
 }
 
-
-
+# Rounding p-values
 round_up <- function(x, digits = 2) {
   multiplier <- 10^digits
   ifelse(x > 0, ceiling(x * multiplier) / multiplier, floor(x * multiplier) / multiplier)
 }
-
-
+# Add `or` in string with multiple choise
 add_or <- function(vec) {
   if (length(vec) == 1) {
     return(as.character(vec))
@@ -572,23 +466,7 @@ add_or <- function(vec) {
   paste(paste(vec[-length(vec)], collapse = ", "), "or", vec[length(vec)])
 }
 
-
-
-check_internet <- function(site, time_out = 10, error_call = rlang::caller_env()) {
-  if (!curl::has_internet()) {
-    cli::cli_abort(c("No internet connection.",
-                "i" = "Please connect an internet and try again."),
-                call = error_call)
-  }
-  response <- httr::GET(site, httr::timeout(time_out))
-  if (!httr::status_code(response) == 200) {
-    cli_abort(c("{gsub('_', ' ', deparse(substitute(site)))} FTP server not responding.",
-                "i" = "Please try again later."),
-              call = error_call)
-  }
-}
-
-
+# Set levels name when subset or averaging the data
 set_names <- function(level, metadata, name_column) {
   test_column(name_column, metadata)
   test_input(level, c("compound",
@@ -607,33 +485,6 @@ set_names <- function(level, metadata, name_column) {
   }
   return(col_names)
 }
-
-# trans_color <- function(color, n_color=10) {
-#   lighten_color <- dichromat::colorRampPalette(c(color, "#FFFFFF"))
-#   light_colors <- lighten_color(n_color+1)
-#   col_code <- light_colors[1:n_color]
-#   return(col_code)
-# }
-#
-#
-# color_light <- function(color, alpha) {
-#   lighten_color <- colorRampPalette(c(color, "#FFFFFF"))
-#   light_colors <- rev(lighten_color(11))
-#   col_code <- light_colors[alpha*10+1]
-#   return(col_code)
-# }
-#
-# node_color <- function(n_nodes) {
-#   node_colors <- Polychrome::createPalette(n_nodes,
-#                                           c("#ff0000", "#00ff00", "#0000ff"))
-#   return(node_colors)
-# }
-#
-# edge_color <- function(node_colors, alpha = 0.5) {
-#    edge_colors <- sapply(node_colors, FUN = color_light, alpha = alpha)
-#    return(edge_colors)
-#  }
-
 
 #' Generate Random Samples from a Dirichlet Distribution
 #'
