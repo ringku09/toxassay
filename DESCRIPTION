@@ -1,5 +1,5 @@
 Package: toxassay
-Title: An R Framework for Eassy Access, Process and analysis of Complex Toxicogenomics Data
+Title: ToxAssay: a hierarchical model-driven tool for advanced toxicogenomics biomarker discovery
 Version: 0.0.0.9000
 Authors@R: c(
     person("Md. Masud Rana", "Ringku", , "ringku_740@yahoo.com", role = c("aut", "cre"),
@@ -21,23 +21,20 @@ LinkingTo:
     RcppArmadillo,
     RcppEigen
 Imports: 
-    affy,
-    AnnotationDbi,
     arules,
     Biobase,
     cli,
     dplyr,
     glue,
-    httr,
     igraph,
     magrittr,
     methods,
     Matrix,
     purrr,
     rat2302.db,
+    hgu133plus2cdf,
     Rcpp,
     RcppEigen,
-    readr,
     reshape2,
     rlang,
     scales,
@@ -46,5 +43,4 @@ Imports:
     tidyr,
     tidyselect
 Suggests: 
-    doParallel,
-    foreach
+    AnnotationDbi
