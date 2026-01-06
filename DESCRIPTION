@@ -32,6 +32,7 @@ Imports:
     igraph,
     magrittr,
     methods,
+    Matrix,
     purrr,
     rat2302.db,
     Rcpp,
