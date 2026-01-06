@@ -31,64 +31,27 @@ scales::rescale
 
 #' Re-export selected functions from utils
 #'
-#' @importFrom utils unzip read.table txtProgressBar setTxtProgressBar download.file packageVersion
-#' @export
-utils::unzip
-#' @export
-utils::read.table
-#' @export
-utils::txtProgressBar
-#' @export
-utils::setTxtProgressBar
-#' @export
-utils::download.file
+#' @importFrom utils packageVersion
 #' @export
 utils::packageVersion
-
-#' Re-export selected functions from tools
-#'
-#' @importFrom tools file_ext
-#' @export
-tools::file_ext
-
-#--------------------------- Biological databases -------------------
 
 #' Re-export selected functions/objects from Bioconductor annotation packages
 #'
 #' @importFrom AnnotationDbi select
 #' @importFrom rat2302.db rat2302.db
+#' @importFrom hgu133plus2cdf hgu133plus2cdf
 #' @export
 AnnotationDbi::select
 #' @export
 rat2302.db::rat2302.db
-
-#------------------------------- magrittr ---------------------------
+#' @export
+hgu133plus2cdf::hgu133plus2cdf
 
 #' Re-export the pipe operator
 #'
 #' @importFrom magrittr %>%
 #' @export
 magrittr::`%>%`
-
-#------------------------------- affy / Biobase ---------------------
-
-#' Re-export selected functions from affy
-#'
-#' @importFrom affy ReadAffy mas5 rma
-#' @export
-affy::ReadAffy
-#' @export
-affy::mas5
-#' @export
-affy::rma
-
-#' Re-export selected functions from Biobase
-#'
-#' @importFrom Biobase exprs
-#' @export
-Biobase::exprs
-
-#------------------------------- dplyr ------------------------------
 
 #' Re-export selected functions from dplyr
 #'
@@ -120,15 +83,11 @@ dplyr::bind_rows
 #' @export
 dplyr::mutate_at
 
-#------------------------------ tidyselect --------------------------
-
 #' Re-export selected functions from tidyselect
 #'
 #' @importFrom tidyselect everything
 #' @export
 tidyselect::everything
-
-#------------------------------- tidyr ------------------------------
 
 #' Re-export selected functions from tidyr
 #'
@@ -138,8 +97,6 @@ tidyr::nest
 #' @export
 tidyr::pivot_wider
 
-#------------------------------- purrr ------------------------------
-
 #' Re-export selected functions from purrr
 #'
 #' @importFrom purrr map imap
@@ -148,18 +105,6 @@ purrr::map
 #' @export
 purrr::imap
 
-#------------------------------- readr ------------------------------
-
-#' Re-export selected functions from readr
-#'
-#' @importFrom readr write_csv write_tsv
-#' @export
-readr::write_csv
-#' @export
-readr::write_tsv
-
-#------------------------------- tibble -----------------------------
-
 #' Re-export selected functions from tibble
 #'
 #' @importFrom tibble tibble as_tibble
@@ -167,52 +112,6 @@ readr::write_tsv
 tibble::tibble
 #' @export
 tibble::as_tibble
-
-#------------------------------ parallel ----------------------------
-
-#' Re-export selected functions from parallel
-#'
-#' @importFrom parallel detectCores splitIndices makeCluster clusterExport clusterCall stopCluster
-#' @export
-parallel::detectCores
-#' @export
-parallel::splitIndices
-#' @export
-parallel::makeCluster
-#' @export
-parallel::clusterExport
-#' @export
-parallel::clusterCall
-#' @export
-parallel::stopCluster
-
-#----------------------------- doParallel ---------------------------
-
-#' Re-export selected functions from doParallel
-#'
-#' @importFrom doParallel registerDoParallel
-#' @export
-doParallel::registerDoParallel
-
-#------------------------------- foreach ----------------------------
-
-#' Re-export selected functions from foreach
-#'
-#' @importFrom foreach getDoParName getDoParWorkers registerDoSEQ foreach %dopar% %do%
-#' @export
-foreach::getDoParName
-#' @export
-foreach::getDoParWorkers
-#' @export
-foreach::registerDoSEQ
-#' @export
-foreach::foreach
-#' @export
-foreach::`%dopar%`
-#' @export
-foreach::`%do%`
-
-#------------------------------- rlang ------------------------------
 
 #' Re-export selected functions from rlang
 #'
@@ -237,8 +136,6 @@ rlang::inherits_any
 rlang::missing_arg
 #' @export
 rlang::parse_expr
-
-#-------------------------------- cli -------------------------------
 
 #' Re-export selected functions from cli
 #'
@@ -279,20 +176,6 @@ glue::glue
 #' @export
 glue::glue_collapse
 
-#-------------------------------- httr ------------------------------
-
-#' Re-export selected functions from httr
-#'
-#' @importFrom httr GET write_disk progress
-#' @export
-httr::GET
-#' @export
-httr::write_disk
-#' @export
-httr::progress
-
-#-------------------------------- arules ------------------------------
-
 #' Re-export selected functions from arules
 #'
 #' @importFrom arules intersect apriori subset %in% quality interestMeasure
@@ -308,8 +191,6 @@ arules::`%in%`
 arules::quality
 #' @export
 arules::interestMeasure
-
-#------------------------------ Package imports ---------------------
 
 #' Import STRINGdb
 #'
