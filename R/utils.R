@@ -127,15 +127,6 @@ col_diff <- function(avg_data) {
   return(pair_mat)
 }
 
-
-# Get common legend data for ggplot
-com_legend <- function(gg_plot) {
-  tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(gg_plot))
-  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-  legend <- tmp$grobs[[leg]]
-  return(legend)
-}
-
 # Capitalize first letter of string
 block_fst <- function(x) {
   if (is.character(x)) {
